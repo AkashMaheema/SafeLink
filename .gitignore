@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase secrets - never commit this file; use firebase_config.template.json as reference
+firebase_config.json
