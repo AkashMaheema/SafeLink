@@ -1,0 +1,28 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "safelink-85a6c",
+          "appId": "1:859513315275:android:e7a3ed6efde75d8132e04e",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "safelink-85a6c",
+          "configurations": {
+            "android": "1:859513315275:android:e7a3ed6efde75d8132e04e",
+            "ios": "1:859513315275:ios:17d8f48e58d6cb1f32e04e",
+            "macos": "1:859513315275:ios:17d8f48e58d6cb1f32e04e",
+            "web": "1:859513315275:web:3b99bf2c052212bc32e04e",
+            "windows": "1:859513315275:web:cf21684185342c0132e04e"
+          }
+        }
+      }
+    }
+  }
+}
