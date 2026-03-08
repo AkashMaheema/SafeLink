@@ -12,7 +12,20 @@
           "package_name": "com.safelink.safelink"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "859513315275-drsmt2him5lbvckajgl2ebsco9rhg624.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.safelink.safelink",
+            "certificate_hash": "def451b944d503506035bcf96a6373b12148b677"
+          }
+        },
+        {
+          "client_id": "859513315275-4on6tdhbnom9s4u76u6kaji8o64d1g0t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCbiDOqXxYBPxuHWrVWgu8CuOAwSK1ccXs"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "859513315275-4on6tdhbnom9s4u76u6kaji8o64d1g0t.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "859513315275-qf6g00ms40fneriqnhgu8ao1p6ff7eeu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.safelink.safelink"
+              }
+            }
+          ]
         }
       }
     }
