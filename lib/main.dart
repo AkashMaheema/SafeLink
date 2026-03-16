@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
@@ -13,11 +14,31 @@ import 'services/alert_service.dart';
 import 'services/firestore_service.dart';
 import 'services/messaging_service.dart';
 
+Future<void> _initializeFirebase() async {
+  if (Firebase.apps.isNotEmpty) {
+    return;
+  }
+
+  try {
+    if (kIsWeb) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } else {
+      await Firebase.initializeApp();
+    }
+  } on FirebaseException catch (e) {
+    if (e.code != 'duplicate-app') {
+      rethrow;
+    }
+  }
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ── Firebase initialisation ──────────────────────────────────────────────
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await _initializeFirebase();
 
   // ── Firestore offline persistence (unlimited cache) ──────────────────────
   FirebaseFirestore.instance.settings = const Settings(
