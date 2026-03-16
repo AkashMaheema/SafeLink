@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../app/router.dart';
 import '../../providers/alert_provider.dart';
 import '../../models/alert_model.dart';
 
@@ -26,7 +27,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 24),
               _buildHelpText(),
               const SizedBox(height: 16), // A large gap to create visual space
-              _buildSosCircles(),
+              _buildSosCircles(context),
               const SizedBox(height: 16), // Space before the inner nav bar
               _buildInnerBottomNav(),
             ],
@@ -172,10 +173,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSosCircles() {
+  Widget _buildSosCircles(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // TODO: Trigger SOS action
+        Navigator.pushNamed(context, AppRoutes.sos);
       },
       child: Container(
         width: 280,
