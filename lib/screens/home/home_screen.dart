@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // State is watched here, but currently just uses placeholder static content.
     // You can wire this up to make your UI dynamic later.
-    final alertProvider = context.watch<AlertProvider>();
+    context.watch<AlertProvider>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -28,8 +28,7 @@ class HomeScreen extends StatelessWidget {
               _buildHelpText(),
               const SizedBox(height: 16), // A large gap to create visual space
               _buildSosCircles(context),
-              const SizedBox(height: 16), // Space before the inner nav bar
-              _buildInnerBottomNav(),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -223,65 +222,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // I have moved the bottom navigation from Scaffold to here, inside the body.
-  Widget _buildInnerBottomNav() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      // SafeArea top: false ensures we only add bottom padding for the home bar.
-      child: SafeArea(
-        top: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildNavItem(Icons.home_filled, 'Home', true),
-            _buildNavItem(Icons.crisis_alert, 'SOS', false),
-            _buildNavItem(Icons.map_outlined, 'Map', false),
-            _buildNavItem(Icons.person_outline, 'Profile', false),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    final color = isActive ? const Color(0xFFE02323) : const Color(0xFFA4A4A4);
-    return InkWell(
-      onTap: () {
-        // TODO: Navigation logic
-      },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontFamily: 'Poppins',
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ],
       ),
     );
   }

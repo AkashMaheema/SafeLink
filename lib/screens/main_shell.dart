@@ -23,41 +23,90 @@ class _MainShellState extends State<MainShell> {
     ProfileScreen(),
   ];
 
-  static const List<NavigationDestination> _destinations = [
-    NavigationDestination(
-      icon: Icon(Icons.home_outlined),
-      selectedIcon: Icon(Icons.home),
-      label: 'Home',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.sos_outlined),
-      selectedIcon: Icon(Icons.sos),
-      label: 'SOS',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.map_outlined),
-      selectedIcon: Icon(Icons.map),
-      label: 'Map',
-    ),
-    NavigationDestination(
-      icon: Icon(Icons.person_outline),
-      selectedIcon: Icon(Icons.person),
-      label: 'Profile',
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _pages),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        destinations: _destinations,
-        // Highlight the SOS tab in red regardless of theme
-        indicatorColor: _currentIndex == 1
-            ? Theme.of(context).colorScheme.error.withAlpha(30)
-            : null,
+      bottomNavigationBar: _MainBottomNav(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+      ),
+    );
+  }
+}
+
+class _MainBottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  const _MainBottomNav({required this.currentIndex, required this.onTap});
+
+  static const _items = [
+    (icon: Icons.home_filled, label: 'Home'),
+    (icon: Icons.crisis_alert, label: 'SOS'),
+    (icon: Icons.map_outlined, label: 'Map'),
+    (icon: Icons.person_outline, label: 'Profile'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(13),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: List.generate(_items.length, (index) {
+            final item = _items[index];
+            final isActive = currentIndex == index;
+            final color = isActive
+                ? const Color(0xFFE02323)
+                : const Color(0xFFA4A4A4);
+
+            return InkWell(
+              onTap: () => onTap(index),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(item.icon, color: color, size: 24),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.label,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 10,
+                        fontFamily: 'Poppins',
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
