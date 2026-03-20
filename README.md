@@ -1,16 +1,51 @@
-# safelink
+# SafeLink
 
-A new Flutter project.
+## Secure Firebase Setup
 
-## Getting Started
+This app uses Firebase client configuration at runtime. Client API keys are not
+private secrets, but they must still be protected with strict restrictions and
+backend rules.
 
-This project is a starting point for a Flutter application.
+### 1. Keep config files out of git
 
-A few resources to get you started if this is your first Flutter project:
+Do not commit these files:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- `firebase_config.json`
+- `android/app/google-services.json`
+- `ios/Runner/GoogleService-Info.plist`
+- `macos/Runner/GoogleService-Info.plist`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Use `firebase_config.template.json` as the template for your local
+`firebase_config.json`.
+
+### 2. Run with local dart defines
+
+Create `firebase_config.json` from the template and fill values locally.
+
+Run:
+
+```bash
+flutter run --dart-define-from-file=firebase_config.json
+```
+
+### 3. Rotate and restrict API keys
+
+In Google Cloud Console -> APIs & Services -> Credentials:
+
+- Rotate keys that were previously exposed.
+- Restrict Web key by HTTP referrers.
+- Restrict Android key by package name + SHA certificate.
+- Restrict iOS key by bundle ID.
+- Apply API restrictions to required Firebase APIs only.
+
+### 4. Enforce Firebase security controls
+
+- Keep Firestore rules strict (never open `allow read, write: if true`).
+- Enable Firebase App Check for Firestore/Auth/Storage where supported.
+- Put privileged operations in Cloud Functions, not in client code.
+
+## Notes
+
+- Android can still initialize from `google-services.json` if present locally.
+- Even when keys are not in git, client apps can still be decompiled; security
+  must rely on rules, App Check, and key restrictions.
