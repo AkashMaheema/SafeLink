@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../app/router.dart';
 import '../../providers/alert_provider.dart';
 import '../../models/alert_model.dart';
 
@@ -8,39 +9,285 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // State is watched here, but currently just uses placeholder static content.
+    // You can wire this up to make your UI dynamic later.
     final alertProvider = context.watch<AlertProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('SafeLink'),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+      backgroundColor: Colors.white,
+      // SafeArea ensures UI doesn't overlap with the notch or status bar
+      body: SafeArea(
+        // Wrapping the column in a scroll view fixes your bottom overflow bug.
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 16),
+              _buildStatusCard(),
+              const SizedBox(height: 24),
+              _buildHelpText(),
+              const SizedBox(height: 16), // A large gap to create visual space
+              _buildSosCircles(context),
+              const SizedBox(height: 16), // Space before the inner nav bar
+              _buildInnerBottomNav(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── UI Components ────────────────────────────────────────────────────────
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hey!',
+                style: TextStyle(
+                  color: Color(0xFF070707),
+                  fontSize: 14,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              Text(
+                'Nutan Khangar',
+                style: TextStyle(
+                  color: Color(0xFF070707),
+                  fontSize: 20,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none, size: 28),
+                onPressed: () {},
+              ),
+              Positioned(
+                right: 10,
+                top: 10,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE02323),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-      body: alertProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : alertProvider.alerts.isEmpty
-          ? _EmptyState(message: alertProvider.errorMessage)
-          : RefreshIndicator(
-              onRefresh: () async {},
-              child: ListView.separated(
-                padding: const EdgeInsets.all(16),
-                itemCount: alertProvider.alerts.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 12),
-                itemBuilder: (context, i) =>
-                    _AlertCard(alert: alertProvider.alerts[i]),
+    );
+  }
+
+  Widget _buildStatusCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24.0),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0077B6), Color(0xFF03045E)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        // I have removed the placeholder network image from here.
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Last Update: Checked 2 mins ago',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontFamily: 'Poppins',
               ),
             ),
+            SizedBox(height: 12),
+            Text(
+              'You\nare safe',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w600,
+                height: 1.1,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'No emergencies reported nearby',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHelpText() {
+    return const Column(
+      children: [
+        Text.rich(
+          TextSpan(
+            text: 'Help is just a click away!\nClick ',
+            style: TextStyle(
+              color: Color(0xFF424B5A),
+              fontSize: 14,
+              fontFamily: 'Poppins',
+            ),
+            children: [
+              TextSpan(
+                text: 'SOS button',
+                style: TextStyle(
+                  color: Color(0xFFE02323),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextSpan(text: ' to call for help.'),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSosCircles(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.sos);
+      },
+      child: Container(
+        width: 280,
+        height: 280,
+        decoration: const BoxDecoration(
+          color: Color(0xFFFAE8E9),
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Container(
+          width: 240,
+          height: 240,
+          decoration: const BoxDecoration(
+            color: Color(0xFFF9D2D2),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Container(
+            width: 190,
+            height: 190,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF2A6A6),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE02323),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Text(
+                'SOS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // I have moved the bottom navigation from Scaffold to here, inside the body.
+  Widget _buildInnerBottomNav() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      // SafeArea top: false ensures we only add bottom padding for the home bar.
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavItem(Icons.home_filled, 'Home', true),
+            _buildNavItem(Icons.crisis_alert, 'SOS', false),
+            _buildNavItem(Icons.map_outlined, 'Map', false),
+            _buildNavItem(Icons.person_outline, 'Profile', false),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, bool isActive) {
+    final color = isActive ? const Color(0xFFE02323) : const Color(0xFFA4A4A4);
+    return InkWell(
+      onTap: () {
+        // TODO: Navigation logic
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontFamily: 'Poppins',
+              fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ── Alert card ────────────────────────────────────────────────────────────────
+// ── Alert card & Empty State (kept for intactness from your design) ──────────
 
 class _AlertCard extends StatelessWidget {
   final AlertModel alert;
@@ -176,8 +423,6 @@ class _Chip extends StatelessWidget {
     );
   }
 }
-
-// ── Empty / error state ───────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final String? message;
