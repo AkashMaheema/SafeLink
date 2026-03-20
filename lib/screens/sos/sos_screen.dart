@@ -56,6 +56,7 @@ class _SosScreenState extends State<SosScreen>
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(title: const Text('SOS')),
       body: SafeArea(
         child: Center(

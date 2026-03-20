@@ -88,6 +88,7 @@ class _MapScreenState extends State<MapScreen> {
     final circles = _buildCircles(alertProvider.alerts, cs);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Alert Map'),
         actions: [
