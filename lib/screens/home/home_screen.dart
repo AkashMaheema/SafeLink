@@ -124,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen>
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Container(
         width: double.infinity,
+        clipBehavior: Clip.antiAlias,
         padding: const EdgeInsets.all(24.0),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -133,38 +134,51 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           borderRadius: BorderRadius.circular(20),
         ),
-        // I have removed the placeholder network image from here.
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Last Update: Checked 2 mins ago',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                fontFamily: 'Poppins',
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Last Update: Checked 2 mins ago',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontFamily: 'Poppins',
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'You\nare safe',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No emergencies reported nearby',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 12),
-            Text(
-              'You\nare safe',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 32,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-                height: 1.1,
-              ),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'No emergencies reported nearby',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
+            const SizedBox(width: 18),
+            SizedBox(
+              width: 140,
+              height: 140,
+              child: Image.asset('assets/images/img1.png', fit: BoxFit.cover),
             ),
           ],
         ),
