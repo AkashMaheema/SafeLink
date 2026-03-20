@@ -4,8 +4,36 @@ import '../../app/router.dart';
 import '../../providers/alert_provider.dart';
 import '../../models/alert_model.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _pulseScale = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,50 +201,73 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildSosCircles(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, AppRoutes.sos);
+    return AnimatedBuilder(
+      animation: _pulseController,
+      builder: (context, child) {
+        final alpha = (40 + (_pulseController.value * 45)).round();
+
+        return Transform.scale(
+          scale: _pulseScale.value,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE02323).withAlpha(alpha),
+                  blurRadius: 24,
+                  spreadRadius: 3,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
       },
-      child: Container(
-        width: 280,
-        height: 280,
-        decoration: const BoxDecoration(
-          color: Color(0xFFFAE8E9),
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(context, AppRoutes.sos);
+        },
         child: Container(
-          width: 240,
-          height: 240,
+          width: 280,
+          height: 280,
           decoration: const BoxDecoration(
-            color: Color(0xFFF9D2D2),
+            color: Color(0xFFFAE8E9),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
           child: Container(
-            width: 190,
-            height: 190,
+            width: 240,
+            height: 240,
             decoration: const BoxDecoration(
-              color: Color(0xFFF2A6A6),
+              color: Color(0xFFF9D2D2),
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
             child: Container(
-              width: 140,
-              height: 140,
+              width: 190,
+              height: 190,
               decoration: const BoxDecoration(
-                color: Color(0xFFE02323),
+                color: Color(0xFFF2A6A6),
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: const Text(
-                'SOS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
+              child: Container(
+                width: 140,
+                height: 140,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFE02323),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  'SOS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
             ),
