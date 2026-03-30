@@ -47,6 +47,9 @@ Future<void> main() async {
   final messagingService = MessagingService();
   await messagingService.init();
 
+  // Subscribe all users to emergency alerts topic
+  await messagingService.subscribeToEmergencyAlerts();
+
   // ── Run app ──────────────────────────────────────────────────────────────
   runApp(
     MultiProvider(
