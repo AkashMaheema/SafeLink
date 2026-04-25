@@ -357,6 +357,12 @@ class _SosScreenState extends State<SosScreen> {
       }
 
       setState(() => _isSending = false);
+      if (e is FirebaseException && e.code == 'permission-denied') {
+        _showMessage(
+          'Failed to send alert: permission denied. Ensure Firestore rules are deployed and you are signed in.',
+        );
+        return;
+      }
       _showMessage('Failed to send alert: $e');
     }
   }
