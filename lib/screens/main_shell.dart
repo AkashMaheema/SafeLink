@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/sos/sos_screen.dart';
+import '../screens/sos/sos_tab_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/profile/profile_screen.dart';
 
@@ -24,7 +24,7 @@ class _MainShellState extends State<MainShell> {
     final isAdmin = context.select<AuthProvider, bool>((auth) => auth.isAdmin);
     final pages = <Widget>[
       isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
-      const SosScreen(),
+      const SosTabScreen(),
       const MapScreen(),
       const ProfileScreen(),
     ];
