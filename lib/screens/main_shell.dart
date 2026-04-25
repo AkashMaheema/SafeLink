@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/sos/sos_screen.dart';
 import '../screens/map/map_screen.dart';
@@ -16,17 +19,18 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  static const List<Widget> _pages = [
-    HomeScreen(),
-    SosScreen(),
-    MapScreen(),
-    ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final isAdmin = context.select<AuthProvider, bool>((auth) => auth.isAdmin);
+    final pages = <Widget>[
+      isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
+      const SosScreen(),
+      const MapScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(index: _currentIndex, children: pages),
       bottomNavigationBar: _MainBottomNav(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
