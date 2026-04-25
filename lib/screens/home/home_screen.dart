@@ -6,6 +6,7 @@ import '../../providers/alert_provider.dart';
 import '../../services/messaging_service.dart';
 import '../../services/notification_overlay_service.dart';
 import '../../widgets/alert_banner.dart';
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -107,15 +108,19 @@ class _HomeScreenState extends State<HomeScreen>
   // ── UI Components ────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.userModel;
+    final userName = user?.displayName ?? 'User';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Hey!',
                 style: TextStyle(
                   color: Color(0xFF070707),
@@ -124,8 +129,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               Text(
-                'Nutan Khangar',
-                style: TextStyle(
+                userName,
+                style: const TextStyle(
                   color: Color(0xFF070707),
                   fontSize: 20,
                   fontFamily: 'Poppins',
