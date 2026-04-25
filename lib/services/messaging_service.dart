@@ -12,13 +12,23 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class MessagingService {
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _messaging;
   final List<AlertCallback> _alertCallbacks = [];
+
+  MessagingService() {
+    try {
+      _messaging = FirebaseMessaging.instance;
+    } catch (e) {
+      debugPrint('FirebaseMessaging not available: $e');
+    }
+  }
 
   /// Request notification permissions and initialise listeners
   Future<void> init() async {
+    if (_messaging == null) return;
+
     // Request permission (iOS / web)
-    await _messaging.requestPermission(alert: true, badge: true, sound: true);
+    await _messaging!.requestPermission(alert: true, badge: true, sound: true);
 
     // Register background handler
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
@@ -70,15 +80,17 @@ class MessagingService {
     }
   }
 
-  Future<String?> getToken() => _messaging.getToken();
+  Future<String?> getToken() async => await _messaging?.getToken();
 
   /// Subscribe to a topic
-  Future<void> subscribeToTopic(String topic) =>
-      _messaging.subscribeToTopic(topic);
+  Future<void> subscribeToTopic(String topic) async {
+    await _messaging?.subscribeToTopic(topic);
+  }
 
   /// Unsubscribe from a topic
-  Future<void> unsubscribeFromTopic(String topic) =>
-      _messaging.unsubscribeFromTopic(topic);
+  Future<void> unsubscribeFromTopic(String topic) async {
+    await _messaging?.unsubscribeFromTopic(topic);
+  }
 
   /// Subscribe all users to emergency_alerts topic
   Future<void> subscribeToEmergencyAlerts() =>

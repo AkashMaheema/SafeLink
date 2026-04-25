@@ -317,10 +317,9 @@ class _SosScreenState extends State<SosScreen> {
       final alertService = context.read<AlertService>();
       await alertService.createAlert(alert);
 
-      // Send FCM notification to all users via emergency_alerts topic
-      // Note: In production, this would be handled by Cloud Functions
-      // For now, we'll use the MessagingService to subscribe/handle locally
-      await FirebaseMessaging.instance.subscribeToTopic('emergency_alerts');
+      // Note: In production, this would be handled by Cloud Functions.
+      // We already subscribe to this topic on app launch in main.dart,
+      // so there's no need to do it again here, which could hang the app.
 
       if (!mounted) {
         return;
