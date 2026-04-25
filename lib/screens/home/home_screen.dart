@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../app/router.dart';
+import '../../models/alert_model.dart';
 import '../../providers/alert_provider.dart';
+import '../../services/messaging_service.dart';
+import '../../services/notification_overlay_service.dart';
+import '../../widgets/alert_banner.dart';
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulseScale;
+  AlertModel? _activeAlert;
 
   @override
   void initState() {
@@ -26,11 +32,38 @@ class _HomeScreenState extends State<HomeScreen>
     _pulseScale = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    // Listen for incoming emergency alerts
+    final messagingService = context.read<MessagingService>();
+    messagingService.onAlertReceived(_onAlertReceived);
+
+    // Subscribe to emergency alerts topic
+    messagingService.subscribeToEmergencyAlerts();
+  }
+
+  void _onAlertReceived(AlertModel alert) {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _activeAlert = alert);
+
+    // Show red blinking notification overlay
+    NotificationOverlayService().showAlertOverlay(context, alert);
+  }
+
+  void _dismissAlert() {
+    setState(() => _activeAlert = null);
+    NotificationOverlayService().dismissOverlay();
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    if (mounted) {
+      final messagingService = context.read<MessagingService>();
+      messagingService.unsubscribeFromEmergencyAlerts();
+    }
     super.dispose();
   }
 
@@ -48,12 +81,21 @@ class _HomeScreenState extends State<HomeScreen>
         child: SingleChildScrollView(
           child: Column(
             children: [
+              // Show alert banner if there's an active alert
+              if (_activeAlert != null)
+                AlertBanner(
+                  alert: _activeAlert!,
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.map);
+                  },
+                  onDismiss: _dismissAlert,
+                ),
               _buildHeader(),
               const SizedBox(height: 16),
               _buildStatusCard(),
               const SizedBox(height: 24),
               _buildHelpText(),
-              const SizedBox(height: 16), // A large gap to create visual space
+              const SizedBox(height: 16),
               _buildSosCircles(context),
               const SizedBox(height: 16),
             ],
@@ -66,15 +108,19 @@ class _HomeScreenState extends State<HomeScreen>
   // ── UI Components ────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.userModel;
+    final userName = user?.displayName ?? 'User';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Hey!',
                 style: TextStyle(
                   color: Color(0xFF070707),
@@ -83,8 +129,8 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
               Text(
-                'Nutan Khangar',
-                style: TextStyle(
+                userName,
+                style: const TextStyle(
                   color: Color(0xFF070707),
                   fontSize: 20,
                   fontFamily: 'Poppins',

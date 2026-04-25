@@ -75,6 +75,7 @@ class AlertModel {
   final String title;
   final String description;
   final AlertLevel alertLevel;
+  final double dangerLevel;
   final AlertLocation geoLocation;
 
   /// Affected radius in **metres**.
@@ -90,6 +91,7 @@ class AlertModel {
     required this.title,
     required this.description,
     required this.alertLevel,
+    this.dangerLevel = 0.5,
     required this.geoLocation,
     required this.radius,
     this.verifiedByGovernment = false,
@@ -117,11 +119,16 @@ class AlertModel {
       location = const AlertLocation(latitude: 0, longitude: 0);
     }
 
+    final parsedLevel = AlertLevelX.fromString(m['alertLevel'] as String?);
+    final rawDanger = (m['dangerLevel'] as num?)?.toDouble();
+    final resolvedDanger = rawDanger ?? (parsedLevel.weight / 2);
+
     return AlertModel(
       id: id,
       title: m['title'] as String? ?? '',
       description: m['description'] as String? ?? '',
-      alertLevel: AlertLevelX.fromString(m['alertLevel'] as String?),
+      alertLevel: parsedLevel,
+      dangerLevel: resolvedDanger.clamp(0.0, 1.0),
       geoLocation: location,
       radius: (m['radius'] as num?)?.toDouble() ?? 0.0,
       verifiedByGovernment: m['verifiedByGovernment'] as bool? ?? false,
@@ -137,6 +144,7 @@ class AlertModel {
     'title': title,
     'description': description,
     'alertLevel': alertLevel.value,
+    'dangerLevel': dangerLevel,
     'geoLocation': geoLocation.toGeoPoint(),
     'radius': radius,
     'verifiedByGovernment': verifiedByGovernment,
@@ -156,6 +164,7 @@ class AlertModel {
     String? title,
     String? description,
     AlertLevel? alertLevel,
+    double? dangerLevel,
     AlertLocation? geoLocation,
     double? radius,
     bool? verifiedByGovernment,
@@ -164,6 +173,7 @@ class AlertModel {
     title: title ?? this.title,
     description: description ?? this.description,
     alertLevel: alertLevel ?? this.alertLevel,
+    dangerLevel: dangerLevel ?? this.dangerLevel,
     geoLocation: geoLocation ?? this.geoLocation,
     radius: radius ?? this.radius,
     verifiedByGovernment: verifiedByGovernment ?? this.verifiedByGovernment,
