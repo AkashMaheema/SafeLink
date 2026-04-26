@@ -46,3 +46,8 @@ app.*.map.json
 
 # Firebase secrets - never commit this file; use firebase_config.template.json as reference
 firebase_config.json
+
+# Firebase platform config files - keep local only
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
