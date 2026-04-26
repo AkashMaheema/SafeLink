@@ -389,4 +389,3 @@ class _SettingsRow extends StatelessWidget {
     );
   }
 }
-
