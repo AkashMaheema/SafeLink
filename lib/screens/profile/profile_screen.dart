@@ -240,6 +240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
     );
   }
+  
 
   Future<void> _confirmSignOut(BuildContext context) async {
     final ok = await showDialog<bool>(
