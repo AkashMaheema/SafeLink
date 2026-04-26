@@ -1,6 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'landing/landing_screen.dart';
 import '../widgets/auth_gate.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -14,17 +15,26 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 2500), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const AuthGate(),
-          transitionsBuilder: (_, animation, __, child) =>
-              FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-      );
-    });
+    _startAppFlow();
+  }
+
+  Future<void> _startAppFlow() async {
+    await Future<void>.delayed(const Duration(milliseconds: 2500));
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding =
+        prefs.getBool(LandingScreen.seenOnboardingKey) ?? false;
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) =>
+            hasSeenOnboarding ? const AuthGate() : const LandingScreen(),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
   }
 
   @override
