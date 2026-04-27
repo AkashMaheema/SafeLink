@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../widgets/auth_gate.dart';
+import '../auth/login_screen.dart';
+import 'pre_login_preferences_screen.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -58,7 +59,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const AuthGate(),
+        pageBuilder: (_, __, ___) => const LoginScreen(),
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 300),
@@ -67,9 +68,25 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
+  void _skipToSetup() {
+    _openSetupScreen();
+  }
+
+  void _openSetupScreen() {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) =>
+            PreLoginPreferencesScreen(onGetStarted: _finishLanding),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
+  }
+
   void _nextPage() {
     if (_currentIndex == _pages.length - 1) {
-      _finishLanding();
+      _openSetupScreen();
       return;
     }
 
@@ -97,6 +114,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 },
                 itemBuilder: (context, index) {
                   final page = _pages[index];
+
                   return Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 28,
@@ -176,7 +194,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   TextButton(
-                    onPressed: _finishLanding,
+                    onPressed: _skipToSetup,
                     child: Text(
                       'SKIP',
                       style: GoogleFonts.poppins(
@@ -206,7 +224,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   TextButton(
                     onPressed: _nextPage,
                     child: Text(
-                      _currentIndex == _pages.length - 1 ? 'START' : 'NEXT',
+                      _currentIndex == _pages.length - 1 ? 'SETUP' : 'NEXT',
                       style: GoogleFonts.poppins(
                         color: const Color(0xFF1A1A1A),
                         fontWeight: FontWeight.w600,
