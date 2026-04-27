@@ -7,6 +7,7 @@ class AlertBanner extends StatelessWidget {
   final VoidCallback onDismiss;
 
   const AlertBanner({
+    super.key,
     required this.alert,
     required this.onTap,
     required this.onDismiss,

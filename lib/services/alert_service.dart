@@ -19,10 +19,21 @@ class AlertService {
   /// Stream of **all** alerts, sorted by severity (red first) then newest.
   Stream<List<AlertModel>> streamAllAlerts() {
     return _col
-        .orderBy('alertLevel', descending: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map(_docsToAlerts);
+        .map((snapshot) {
+          final alerts = _docsToAlerts(snapshot);
+          alerts.sort((a, b) {
+            final bySeverity = b.alertLevel.weight.compareTo(
+              a.alertLevel.weight,
+            );
+            if (bySeverity != 0) {
+              return bySeverity;
+            }
+            return b.createdAt.compareTo(a.createdAt);
+          });
+          return alerts;
+        });
   }
 
   /// Stream of alerts whose radius covers [userLocation].
@@ -52,9 +63,15 @@ class AlertService {
       // Client-side proximity filter
       final nearby =
           all.where((alert) => alert.isWithinRadius(userLocation)).toList()
-            ..sort(
-              (a, b) => b.alertLevel.weight.compareTo(a.alertLevel.weight),
-            );
+            ..sort((a, b) {
+              final bySeverity = b.alertLevel.weight.compareTo(
+                a.alertLevel.weight,
+              );
+              if (bySeverity != 0) {
+                return bySeverity;
+              }
+              return b.createdAt.compareTo(a.createdAt);
+            });
 
       return nearby;
     });
@@ -71,9 +88,13 @@ class AlertService {
         .map((snapshot) {
           return _docsToAlerts(
             snapshot,
-          ).where((a) => a.isWithinRadius(userLocation)).toList()..sort(
-            (a, b) => b.alertLevel.weight.compareTo(a.alertLevel.weight),
-          );
+          ).where((a) => a.isWithinRadius(userLocation)).toList()..sort((a, b) {
+            final bySeverity = b.alertLevel.weight.compareTo(a.alertLevel.weight);
+            if (bySeverity != 0) {
+              return bySeverity;
+            }
+            return b.createdAt.compareTo(a.createdAt);
+          });
         });
   }
 

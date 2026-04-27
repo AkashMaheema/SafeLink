@@ -28,9 +28,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) =>
+        pageBuilder: (context, animation, secondaryAnimation) =>
             hasSeenOnboarding ? const AuthGate() : const LandingScreen(),
-        transitionsBuilder: (_, animation, __, child) =>
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 400),
       ),
@@ -41,9 +41,10 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final isSmall = size.height < 680;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -56,9 +57,9 @@ class _SplashScreenState extends State<SplashScreen> {
                     text: 'Safe',
                     style: GoogleFonts.poppins(
                       fontSize: isSmall ? 52 : 64,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       height: 1.0,
-                      color: const Color(0xFF000000),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   TextSpan(
@@ -78,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: GoogleFonts.poppins(
                 fontSize: isSmall ? 16 : 20,
                 height: 1.0,
-                color: const Color(0xFF150502),
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: 10,
               ),
             ),
