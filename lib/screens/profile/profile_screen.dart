@@ -180,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       onChanged: (value) {
                                         setState(() => _darkMode = value);
                                       },
-                                      activeColor: const Color(0xFFE02323),
+                                      activeThumbColor: const Color(0xFFE02323),
                                       materialTapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
                                     ),
@@ -240,7 +240,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
     );
   }
-  
 
   Future<void> _confirmSignOut(BuildContext context) async {
     final ok = await showDialog<bool>(
