@@ -34,7 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             'Profile',
                             style: TextStyle(
                               color: Color(0xFF121212),
-                              fontSize: 30,
+                              fontSize: 44,
                               fontWeight: FontWeight.w700,
                               fontFamily: 'Poppins',
                             ),
