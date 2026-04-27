@@ -1,6 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'landing/landing_screen.dart';
 import '../widgets/auth_gate.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -14,26 +15,36 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(milliseconds: 2500), () {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const AuthGate(),
-          transitionsBuilder: (_, animation, __, child) =>
-              FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-      );
-    });
+    _startAppFlow();
+  }
+
+  Future<void> _startAppFlow() async {
+    await Future<void>.delayed(const Duration(milliseconds: 2500));
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding =
+        prefs.getBool(LandingScreen.seenOnboardingKey) ?? false;
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            hasSeenOnboarding ? const AuthGate() : const LandingScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final isSmall = size.height < 680;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -46,9 +57,9 @@ class _SplashScreenState extends State<SplashScreen> {
                     text: 'Safe',
                     style: GoogleFonts.poppins(
                       fontSize: isSmall ? 52 : 64,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       height: 1.0,
-                      color: const Color(0xFF000000),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   TextSpan(
@@ -68,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: GoogleFonts.poppins(
                 fontSize: isSmall ? 16 : 20,
                 height: 1.0,
-                color: const Color(0xFF150502),
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: 10,
               ),
             ),
