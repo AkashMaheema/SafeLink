@@ -38,14 +38,23 @@ Future<void> main() async {
   await _initializeFirebaseSafely();
 
   // ── Firestore offline persistence (unlimited cache) ──────────────────────
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
+  try {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+  } catch (e) {
+    debugPrint('Failed to set Firestore settings: $e');
+  }
 
   // ── FCM setup ────────────────────────────────────────────────────────────
   final messagingService = MessagingService();
-  await messagingService.init();
+  // Fire-and-forget FCM setup so it doesn't block runApp if Google Play Services is missing or slow
+  messagingService.init().then((_) {
+    return messagingService.subscribeToEmergencyAlerts();
+  }).catchError((e) {
+    debugPrint('FCM setup failed: $e');
+  });
 
   // ── Run app ──────────────────────────────────────────────────────────────
   runApp(

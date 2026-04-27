@@ -1,9 +1,13 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import '../../providers/alert_provider.dart';
+
 import '../../models/alert_model.dart';
+import '../../providers/alert_provider.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -13,119 +17,338 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  GoogleMapController? _mapController;
+  final MapController _mapController = MapController();
+  Position? _currentPosition;
   bool _locationGranted = false;
+  bool _mapReady = false;
+  double _nearbyRadiusKm = 5;
 
-  // Default camera — Mumbai (update once live location is added)
-  static const CameraPosition _defaultCamera = CameraPosition(
-    target: LatLng(19.0760, 72.8777),
-    zoom: 11,
-  );
+  static const LatLng _defaultCenter = LatLng(6.8731, 79.9982);
+  static const double _defaultZoom = 15.2;
 
   @override
   void initState() {
     super.initState();
-    _requestLocationPermission();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      context.read<AlertProvider>().startListeningAll();
+    });
+    _loadLocation();
   }
 
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.locationWhenInUse.request();
-    if (mounted) {
-      setState(() => _locationGranted = status.isGranted);
+  Future<void> _loadLocation() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (!mounted) {
+        return;
+      }
+      setState(() => _locationGranted = false);
+      return;
     }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    final granted =
+        permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _locationGranted = granted);
+    if (!granted) {
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _currentPosition = position);
+    _fitSelectedAreaToView();
   }
 
-  Set<Marker> _buildMarkers(List<AlertModel> alerts, ColorScheme cs) {
-    return alerts.map((alert) {
+  LatLng get _mapCenter => _currentPosition == null
+      ? _defaultCenter
+      : LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+
+  AlertLocation get _referenceLocation => AlertLocation(
+    latitude: _mapCenter.latitude,
+    longitude: _mapCenter.longitude,
+  );
+
+  double _distanceToAlert(AlertModel alert) =>
+      _referenceLocation.distanceTo(alert.geoLocation);
+
+  String _radiusLabel(double radiusKm) {
+    return radiusKm.toStringAsFixed(
+      radiusKm.truncateToDouble() == radiusKm ? 0 : 1,
+    );
+  }
+
+  List<Marker> _buildMarkers(List<AlertModel> alerts) {
+    return alerts.take(20).map((alert) {
       final color = switch (alert.alertLevel) {
-        AlertLevel.red => BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueRed,
-        ),
-        AlertLevel.yellow => BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueYellow,
-        ),
-        AlertLevel.green => BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueGreen,
-        ),
+        AlertLevel.red => const Color(0xFFE84C4C),
+        AlertLevel.yellow => const Color(0xFFD0AF1D),
+        AlertLevel.green => const Color(0xFF47B36B),
       };
 
       return Marker(
-        markerId: MarkerId(alert.id),
-        position: LatLng(
+        point: LatLng(
           alert.geoLocation.latitude,
           alert.geoLocation.longitude,
         ),
-        icon: color,
-        infoWindow: InfoWindow(title: alert.title, snippet: alert.description),
+        width: 22,
+        height: 22,
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+        ),
       );
-    }).toSet();
+    }).toList();
   }
 
-  Set<Circle> _buildCircles(List<AlertModel> alerts, ColorScheme cs) {
-    return alerts.map((alert) {
-      final color = switch (alert.alertLevel) {
-        AlertLevel.red => Colors.red,
-        AlertLevel.yellow => Colors.amber,
-        AlertLevel.green => Colors.green,
-      };
+  Future<void> _centerOnUser() async {
+    if (_currentPosition == null) {
+      await _loadLocation();
+      return;
+    }
+    _fitSelectedAreaToView();
+  }
 
-      return Circle(
-        circleId: CircleId('circle_${alert.id}'),
-        center: LatLng(alert.geoLocation.latitude, alert.geoLocation.longitude),
-        radius: alert.radius,
-        strokeColor: color.withAlpha(200),
-        strokeWidth: 2,
-        fillColor: color.withAlpha(30),
-      );
-    }).toSet();
+  void _fitSelectedAreaToView() {
+    if (!_mapReady) {
+      return;
+    }
+
+    final center = _mapCenter;
+    final radiusMeters = _nearbyRadiusKm * 1000;
+    final latDelta = radiusMeters / 111320.0;
+    final lngDivider = (111320.0 * math.cos(center.latitude * math.pi / 180))
+        .abs()
+        .clamp(20000.0, 111320.0);
+    final lngDelta = radiusMeters / lngDivider;
+
+    final bounds = LatLngBounds(
+      LatLng(center.latitude - latDelta, center.longitude - lngDelta),
+      LatLng(center.latitude + latDelta, center.longitude + lngDelta),
+    );
+
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(22),
+        maxZoom: _defaultZoom,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final alertProvider = context.watch<AlertProvider>();
-    final cs = Theme.of(context).colorScheme;
-    final markers = _buildMarkers(alertProvider.alerts, cs);
-    final circles = _buildCircles(alertProvider.alerts, cs);
+    final alerts = alertProvider.alerts.toList();
+
+    final nearbyAlerts = alerts
+        .where((alert) => _distanceToAlert(alert) <= _nearbyRadiusKm * 1000)
+        .toList();
+    final mapAlerts = nearbyAlerts.isNotEmpty ? nearbyAlerts : alerts;
+    final cardAlerts = nearbyAlerts.isNotEmpty ? nearbyAlerts : alerts;
+
+    // Priority: highest danger first, then nearest, then newest.
+    cardAlerts.sort((a, b) {
+      final byDanger = b.alertLevel.weight.compareTo(a.alertLevel.weight);
+      if (byDanger != 0) {
+        return byDanger;
+      }
+      final byDistance = _distanceToAlert(a).compareTo(_distanceToAlert(b));
+      if (byDistance != 0) {
+        return byDistance;
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Alert Map'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.my_location),
-            tooltip: 'Centre on my location',
-            onPressed: () {
-              _mapController?.animateCamera(
-                CameraUpdate.newCameraPosition(_defaultCamera),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          GoogleMap(
-            initialCameraPosition: _defaultCamera,
-            onMapCreated: (c) => _mapController = c,
-            markers: markers,
-            circles: circles,
-            myLocationButtonEnabled: _locationGranted,
-            myLocationEnabled: _locationGranted,
-            zoomControlsEnabled: false,
-          ),
-
-          // Legend
-          Positioned(bottom: 24, left: 16, child: _Legend()),
-
-          // Alert count chip
-          Positioned(
-            top: 12,
-            right: 16,
-            child: Chip(
-              avatar: const Icon(Icons.crisis_alert, size: 18),
-              label: Text(
-                '${markers.length} alert${markers.length == 1 ? '' : 's'}',
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _MapHeader(
+                onNotificationTap: () {},
+                onCenterTap: _centerOnUser,
               ),
+              const SizedBox(height: 12),
+              _MapPreview(
+                center: _mapCenter,
+                zoom: _defaultZoom,
+                selectedRadiusMeters: _nearbyRadiusKm * 1000,
+                markers: _buildMarkers(mapAlerts),
+                locationGranted: _locationGranted,
+                mapController: _mapController,
+                onMapReady: () {
+                  if (!_mapReady) {
+                    setState(() => _mapReady = true);
+                  }
+                  _fitSelectedAreaToView();
+                },
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Select the area nearby you',
+                style: TextStyle(
+                  color: Color(0xFF111111),
+                  fontSize: 28,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.place_outlined,
+                    size: 18,
+                    color: Color(0xFF111111),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Within ${_radiusLabel(_nearbyRadiusKm)} km',
+                    style: const TextStyle(
+                      color: Color(0xFF111111),
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 4,
+                        activeTrackColor: const Color(0xFFE84C4C),
+                        inactiveTrackColor: const Color(0xFFE1E1E1),
+                        thumbColor: const Color(0xFFE84C4C),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 7,
+                        ),
+                        overlayShape: SliderComponentShape.noOverlay,
+                      ),
+                      child: Slider(
+                        value: _nearbyRadiusKm,
+                        min: 1,
+                        max: 10,
+                        divisions: 18,
+                        onChanged: (value) {
+                          setState(() => _nearbyRadiusKm = value);
+                          _fitSelectedAreaToView();
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: cardAlerts.isEmpty
+                    ? Column(
+                        children: [
+                          if (alertProvider.errorMessage != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                alertProvider.errorMessage!,
+                                style: const TextStyle(
+                                  color: Color(0xFFE02323),
+                                  fontSize: 12,
+                                  fontFamily: 'Poppins',
+                                ),
+                              ),
+                            ),
+                          const _EmptyNearbyCard(),
+                        ],
+                      )
+                    : ListView.separated(
+                        itemCount: cardAlerts.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final alert = cardAlerts[index];
+                          return _NearbyAlertCard(
+                            alert: alert,
+                            distanceMeters: _distanceToAlert(alert),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapHeader extends StatelessWidget {
+  final VoidCallback onNotificationTap;
+  final VoidCallback onCenterTap;
+
+  const _MapHeader({
+    required this.onNotificationTap,
+    required this.onCenterTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Text(
+            'Map',
+            style: TextStyle(
+              color: Color(0xFF111111),
+              fontSize: 38,
+              fontFamily: 'Poppins',
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              onPressed: onCenterTap,
+              icon: const Icon(Icons.my_location_outlined, size: 22),
+              color: const Color(0xFF111111),
+              tooltip: 'Center map',
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              onPressed: onNotificationTap,
+              icon: const Icon(
+                Icons.notifications_none_rounded,
+                size: 25,
+              ),
+              color: const Color(0xFF111111),
+              tooltip: 'Notifications',
             ),
           ),
         ],
@@ -134,22 +357,77 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
-class _Legend extends StatelessWidget {
+class _MapPreview extends StatelessWidget {
+  final LatLng center;
+  final double zoom;
+  final double selectedRadiusMeters;
+  final List<Marker> markers;
+  final bool locationGranted;
+  final MapController mapController;
+  final VoidCallback onMapReady;
+
+  const _MapPreview({
+    required this.center,
+    required this.zoom,
+    required this.selectedRadiusMeters,
+    required this.markers,
+    required this.locationGranted,
+    required this.mapController,
+    required this.onMapReady,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return SizedBox(
+      height: 332,
+      width: double.infinity,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: FlutterMap(
+          mapController: mapController,
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: zoom,
+            onMapReady: onMapReady,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+            ),
+          ),
           children: [
-            _LegendRow(color: Colors.red, label: 'Critical'),
-            const SizedBox(height: 6),
-            _LegendRow(color: Colors.amber, label: 'Moderate'),
-            const SizedBox(height: 6),
-            _LegendRow(color: Colors.green, label: 'Low risk'),
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.safelink.safelink',
+            ),
+            CircleLayer(
+              circles: [
+                CircleMarker(
+                  point: center,
+                  radius: selectedRadiusMeters,
+                  useRadiusInMeter: true,
+                  borderStrokeWidth: 2,
+                  borderColor: const Color(0xFFE84C4C),
+                  color: const Color(0xFFE84C4C).withAlpha(30),
+                ),
+              ],
+            ),
+            MarkerLayer(markers: markers),
+            if (locationGranted)
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: center,
+                    width: 14,
+                    height: 14,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E88FF),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -157,24 +435,146 @@ class _Legend extends StatelessWidget {
   }
 }
 
-class _LegendRow extends StatelessWidget {
-  final Color color;
-  final String label;
-  const _LegendRow({required this.color, required this.label});
+class _NearbyAlertCard extends StatelessWidget {
+  final AlertModel alert;
+  final double distanceMeters;
+
+  const _NearbyAlertCard({
+    required this.alert,
+    required this.distanceMeters,
+  });
+
+  String _distanceLabel() {
+    if (distanceMeters < 1000) {
+      return '${distanceMeters.round()} m';
+    }
+    return '${(distanceMeters / 1000).toStringAsFixed(1)} km';
+  }
+
+  String _timeAgoLabel() {
+    final difference = DateTime.now().difference(alert.createdAt);
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    }
+    if (difference.inHours < 1) {
+      return '${difference.inMinutes}m ago';
+    }
+    if (difference.inDays < 1) {
+      return '${difference.inHours}h ago';
+    }
+    return '${difference.inDays}d ago';
+  }
+
+  Color _statusColor() {
+    return switch (alert.alertLevel) {
+      AlertLevel.red => const Color(0xFFBE1E1E),
+      AlertLevel.yellow => const Color(0xFFD0AF1D),
+      AlertLevel.green => const Color(0xFF47B36B),
+    };
+  }
+
+  IconData _icon() {
+    final title = alert.title.toLowerCase();
+    if (title.contains('fire')) {
+      return Icons.local_fire_department_outlined;
+    }
+    if (title.contains('accident') || title.contains('crash')) {
+      return Icons.car_crash_outlined;
+    }
+    if (title.contains('flood') || title.contains('water')) {
+      return Icons.water_drop_outlined;
+    }
+    return Icons.warning_amber_rounded;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F6F6),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEFEFEF),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              _icon(),
+              size: 18,
+              color: const Color(0xFFE84C4C),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  alert.title.isEmpty ? 'Nearby incident' : alert.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF111111),
+                    fontSize: 16,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '${_distanceLabel()} - ${_timeAgoLabel()}',
+                  style: const TextStyle(
+                    color: Color(0xFF757575),
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 9,
+            height: 9,
+            decoration: BoxDecoration(
+              color: _statusColor(),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyNearbyCard extends StatelessWidget {
+  const _EmptyNearbyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F6F6),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: const Text(
+        'No incidents found in the selected radius.',
+        style: TextStyle(
+          color: Color(0xFF7E7E7E),
+          fontSize: 14,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w500,
         ),
-        const SizedBox(width: 8),
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-      ],
+      ),
     );
   }
 }
