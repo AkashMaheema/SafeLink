@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../models/alert_model.dart';
 import '../services/alert_service.dart';
+import 'caption_provider.dart';
 
 /// Exposes a live, sorted list of [AlertModel]s to the widget tree.
 ///
@@ -13,8 +14,9 @@ import '../services/alert_service.dart';
 ///     entire provider.
 class AlertProvider extends ChangeNotifier {
   final AlertService _alertService;
+  final CaptionProvider _captionProvider;
 
-  AlertProvider(this._alertService);
+  AlertProvider(this._alertService, this._captionProvider);
 
   // ── Internal state ───────────────────────────────────────────────────────
 
@@ -116,6 +118,17 @@ class AlertProvider extends ChangeNotifier {
 
     _sub = stream.listen(
       (incoming) {
+        // Detect new alerts to show as captions
+        if (_alerts.isNotEmpty) {
+          final newAlerts = incoming.where((a) => !_alerts.any((old) => old.id == a.id)).toList();
+          if (newAlerts.isNotEmpty) {
+            final firstNew = newAlerts.first;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _captionProvider.showCaption('[ALERT] ${firstNew.title}: ${firstNew.description}');
+            });
+          }
+        }
+
         _alerts = incoming;
         _isLoading = false;
         notifyListeners();

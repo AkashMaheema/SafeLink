@@ -255,36 +255,33 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: 36,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Text(
+    return Row(
+      children: [
+        const SizedBox(width: 24), // Balance the icon button for centering
+        Expanded(
+          child: Text(
             title,
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: colorScheme.onSurface,
-              fontSize: 21,
               fontFamily: 'Poppins',
+              fontSize: 30,
               fontWeight: FontWeight.w700,
             ),
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              onPressed: onBellTap,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              splashRadius: 20,
-              icon: Icon(
-                Icons.notifications_none_rounded,
-                size: 24,
-                color: colorScheme.onSurface,
-              ),
-            ),
+        ),
+        IconButton(
+          onPressed: onBellTap,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          splashRadius: 20,
+          icon: Icon(
+            Icons.notifications_none_rounded,
+            size: 24,
+            color: colorScheme.onSurface,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
