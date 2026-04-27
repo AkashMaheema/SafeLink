@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import 'package:sound_mode/sound_mode.dart';
 import 'package:sound_mode/utils/ringer_mode_statuses.dart';
 import 'package:sound_mode/permission_handler.dart';
@@ -28,9 +27,11 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> _loadSettingsPreference() async {
     final prefs = await SharedPreferences.getInstance();
-    _isVibrationOnly = prefs.getBool(AppConstants.vibrationOnlyEnabled) ?? false;
+    _isVibrationOnly =
+        prefs.getBool(AppConstants.vibrationOnlyEnabled) ?? false;
     _isLiveCaptions = prefs.getBool(AppConstants.liveCaptionsEnabled) ?? false;
-    _defaultSosAction = prefs.getString(AppConstants.defaultSosAction) ?? 'Notify Contacts';
+    _defaultSosAction =
+        prefs.getString(AppConstants.defaultSosAction) ?? 'Notify Contacts';
     _isShakeToSos = prefs.getBool(AppConstants.shakeToSosEnabled) ?? false;
     _isSilentSos = prefs.getBool(AppConstants.silentSosEnabled) ?? false;
     _isLoaded = true;
@@ -49,7 +50,7 @@ class SettingsProvider extends ChangeNotifier {
         // Prompt user to grant permission
         await PermissionHandler.openDoNotDisturbSetting();
       }
-      
+
       if (enabled) {
         await SoundMode.setSoundMode(RingerModeStatus.vibrate);
       } else {
@@ -91,14 +92,14 @@ class SettingsProvider extends ChangeNotifier {
     if (_isSilentSos == enabled && _isLoaded) return;
     _isSilentSos = enabled;
     notifyListeners();
-    
+
     // Mute the phone's system volume when Silent SOS is ON
     try {
       bool? isGranted = await PermissionHandler.permissionsGranted;
       if (isGranted != true) {
         await PermissionHandler.openDoNotDisturbSetting();
       }
-      
+
       if (enabled) {
         await SoundMode.setSoundMode(RingerModeStatus.silent);
       } else {
