@@ -115,7 +115,12 @@ class _SosTabScreenState extends State<SosTabScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Header(title: 'Alerts', onBellTap: () {}),
+              _Header(
+                title: 'Alerts',
+                onBellTap: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
+              ),
               const SizedBox(height: 28),
               const _SectionTitle(),
               const SizedBox(height: 12),

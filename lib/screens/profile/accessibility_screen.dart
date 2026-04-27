@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/router.dart';
 
 class AccessibilityScreen extends StatefulWidget {
   const AccessibilityScreen({super.key});
@@ -87,7 +88,9 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.notifications);
+                      },
                       icon: const Icon(Icons.notifications_none_rounded),
                       color: const Color(0xFF1C1C1C),
                     ),

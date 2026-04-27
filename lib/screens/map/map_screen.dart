@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/router.dart';
 import '../../models/alert_model.dart';
 import '../../providers/alert_provider.dart';
 
@@ -187,7 +188,12 @@ class _MapScreenState extends State<MapScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MapHeader(onNotificationTap: () {}, onCenterTap: _centerOnUser),
+              _MapHeader(
+                onNotificationTap: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
+                onCenterTap: _centerOnUser,
+              ),
               const SizedBox(height: 12),
               _MapPreview(
                 center: _mapCenter,
