@@ -50,9 +50,7 @@ class _SosTabScreenState extends State<SosTabScreen> {
       }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-        ),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
 
       if (!mounted) {
@@ -110,7 +108,7 @@ class _SosTabScreenState extends State<SosTabScreen> {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(22, 18, 22, 26),
@@ -119,7 +117,9 @@ class _SosTabScreenState extends State<SosTabScreen> {
             children: [
               _Header(
                 title: 'Alerts',
-                onBellTap: () {},
+                onBellTap: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
               ),
               const SizedBox(height: 28),
               const _SectionTitle(),
@@ -172,11 +172,7 @@ class _SosTabScreenState extends State<SosTabScreen> {
     }
 
     if (userLocation != null) {
-      final nearby = _filterAlertsByDistance(
-        alerts,
-        userLocation,
-        distanceFilterKm,
-      );
+      final nearby = _filterAlertsByDistance(alerts, userLocation, distanceFilterKm);
       nearby.sort(_sortAlerts);
       return nearby;
     }
@@ -258,6 +254,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: 36,
       child: Stack(
@@ -265,8 +262,8 @@ class _Header extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF111111),
+            style: TextStyle(
+              color: colorScheme.onSurface,
               fontSize: 21,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w700,
@@ -279,10 +276,10 @@ class _Header extends StatelessWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
               splashRadius: 20,
-              icon: const Icon(
+              icon: Icon(
                 Icons.notifications_none_rounded,
                 size: 24,
-                color: Color(0xFF111111),
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -297,19 +294,20 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text.rich(
+    final colorScheme = Theme.of(context).colorScheme;
+    return Text.rich(
       TextSpan(
         children: [
           TextSpan(
             text: 'Near ',
             style: TextStyle(
-              color: Color(0xFF111111),
+              color: colorScheme.onSurface,
               fontSize: 24,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w600,
             ),
           ),
-          TextSpan(
+          const TextSpan(
             text: 'by',
             style: TextStyle(
               color: Color(0xFFE12626),
@@ -331,10 +329,11 @@ class _DangerHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFE8E8),
+        color: colorScheme.errorContainer.withValues(alpha: 0.28),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Container(
@@ -362,11 +361,13 @@ class _DangerHeroCard extends StatelessWidget {
                 _InfoPill(
                   icon: Icons.location_on_outlined,
                   label: _radiusLabel(alert.radius),
+                  textColor: colorScheme.onError,
                 ),
                 const SizedBox(width: 10),
                 _InfoPill(
                   icon: Icons.access_time_rounded,
                   label: _timeAgo(alert.createdAt),
+                  textColor: colorScheme.onError,
                 ),
               ],
             ),
@@ -377,13 +378,13 @@ class _DangerHeroCard extends StatelessWidget {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    _iconForAlert(alert),
-                    color: const Color(0xFFE12626),
+                  child: const Icon(
+                    Icons.crisis_alert_outlined,
+                    color: Color(0xFFE12626),
                     size: 24,
                   ),
                 ),
@@ -394,8 +395,8 @@ class _DangerHeroCard extends StatelessWidget {
                     children: [
                       Text(
                         alert.title,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colorScheme.onError,
                           fontSize: 15,
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w700,
@@ -406,8 +407,8 @@ class _DangerHeroCard extends StatelessWidget {
                         alert.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colorScheme.onError,
                           fontSize: 14,
                           fontFamily: 'Poppins',
                           fontWeight: FontWeight.w400,
@@ -420,7 +421,10 @@ class _DangerHeroCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Container(height: 1, color: Colors.white.withValues(alpha: 0.28)),
+            Container(
+              height: 1,
+              color: colorScheme.onError.withValues(alpha: 0.30),
+            ),
             const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
@@ -430,8 +434,8 @@ class _DangerHeroCard extends StatelessWidget {
                   Navigator.pushNamed(context, AppRoutes.map);
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFE12626),
+                  backgroundColor: colorScheme.surface,
+                  foregroundColor: colorScheme.error,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
@@ -453,7 +457,7 @@ class _DangerHeroCard extends StatelessWidget {
                 Navigator.pushNamed(context, AppRoutes.sos);
               },
               style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
+                foregroundColor: colorScheme.onError,
               ),
               child: const Text(
                 'Report',
@@ -475,7 +479,7 @@ class _DangerHeroCard extends StatelessWidget {
       return 'Nearby';
     }
     final radiusInKm = radiusInMeters / 1000;
-    return '${radiusInKm.toStringAsFixed(1)}km';
+    return '${radiusInKm.toStringAsFixed(1)} km';
   }
 
   static String _timeAgo(DateTime createdAt) {
@@ -498,10 +502,11 @@ class _SafeHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7FAFF),
+        color: colorScheme.primaryContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Container(
@@ -517,11 +522,11 @@ class _SafeHeroCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            const Text(
+            Text(
               'there are no alerts\nnear by yours.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF22426A),
+                color: colorScheme.onPrimaryContainer,
                 fontSize: 14,
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w500,
@@ -531,21 +536,21 @@ class _SafeHeroCard extends StatelessWidget {
             const SizedBox(height: 14),
             Container(
               height: 1,
-              color: const Color(0xFF22426A).withValues(alpha: 0.25),
+              color: colorScheme.onPrimaryContainer.withValues(alpha: 0.25),
             ),
             const SizedBox(height: 16),
             Container(
               width: double.infinity,
               height: 39,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(999),
               ),
               alignment: Alignment.center,
-              child: const Text(
+              child: Text(
                 'You are Safe',
                 style: TextStyle(
-                  color: Color(0xFF143C72),
+                  color: colorScheme.primary,
                   fontSize: 17,
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w700,
@@ -562,20 +567,25 @@ class _SafeHeroCard extends StatelessWidget {
 class _InfoPill extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color textColor;
 
-  const _InfoPill({required this.icon, required this.label});
+  const _InfoPill({
+    required this.icon,
+    required this.label,
+    required this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white, size: 14),
+        Icon(icon, color: textColor, size: 14),
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: textColor,
             fontSize: 11,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w400,
@@ -594,15 +604,16 @@ class _AudienceSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 10,
+      runSpacing: 10,
       children: [
         _AudienceChip(
           label: 'Reported By Others',
           selected: showOthers,
           onTap: () => onChanged(true),
         ),
-        const SizedBox(width: 10),
         _AudienceChip(
           label: 'Reported By You',
           selected: !showOthers,
@@ -626,19 +637,22 @@ class _AudienceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFEFEE) : Colors.transparent,
+          color: selected
+              ? colorScheme.primaryContainer.withValues(alpha: 0.45)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? const Color(0xFFE12626) : const Color(0xFF3A3A3A),
+            color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
             fontSize: 12,
             fontFamily: 'Poppins',
             fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
@@ -664,21 +678,22 @@ class _DistanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(
+            Icon(
               Icons.location_on_outlined,
               size: 18,
-              color: Color(0xFF111111),
+              color: colorScheme.onSurface,
             ),
             const SizedBox(width: 4),
             Text(
               'Within ${_distanceLabel(distanceKm)}',
-              style: const TextStyle(
-                color: Color(0xFF111111),
+              style: TextStyle(
+                color: colorScheme.onSurface,
                 fontSize: 15,
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w500,
@@ -687,48 +702,38 @@ class _DistanceRow extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6,
-                  activeTrackColor: const Color(0xFFE44A4A),
-                  inactiveTrackColor: const Color(0xFFEAEAEA),
-                  thumbColor: const Color(0xFFE44A4A),
-                  overlayColor: const Color(0x22E44A4A),
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 6,
-                  ),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 14,
-                  ),
-                ),
-                child: Slider(
-                  value: distanceKm,
-                  min: 1,
-                  max: 10,
-                  divisions: 9,
-                  onChanged: onChanged,
-                ),
-              ),
-            ),
-          ],
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 6,
+            activeTrackColor: colorScheme.primary,
+            inactiveTrackColor: colorScheme.outlineVariant,
+            thumbColor: colorScheme.primary,
+            overlayColor: colorScheme.primary.withValues(alpha: 0.14),
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+          ),
+          child: Slider(
+            value: distanceKm,
+            min: 1,
+            max: 10,
+            divisions: 9,
+            onChanged: onChanged,
+          ),
         ),
         if (isResolvingLocation)
-          const Text(
+          Text(
             'Getting your location...',
             style: TextStyle(
-              color: Color(0xFF767676),
+              color: colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontFamily: 'Poppins',
             ),
           )
         else if (!hasLocation)
-          const Text(
+          Text(
             'Location unavailable. Showing all alerts instead of distance-filtered results.',
             style: TextStyle(
-              color: Color(0xFF767676),
+              color: colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontFamily: 'Poppins',
             ),
@@ -745,11 +750,12 @@ class _AlertListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -757,10 +763,10 @@ class _AlertListCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.location_on_outlined,
                 size: 14,
-                color: Color(0xFF767676),
+                color: colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -768,8 +774,8 @@ class _AlertListCard extends StatelessWidget {
                   _locationLabel(alert),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF767676),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 11,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w400,
@@ -793,8 +799,8 @@ class _AlertListCard extends StatelessWidget {
               Container(
                 width: 46,
                 height: 46,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -810,8 +816,8 @@ class _AlertListCard extends StatelessWidget {
                   children: [
                     Text(
                       alert.title,
-                      style: const TextStyle(
-                        color: Color(0xFF141414),
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
                         fontSize: 15,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w700,
@@ -822,8 +828,8 @@ class _AlertListCard extends StatelessWidget {
                       alert.description,
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF444444),
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
                         fontSize: 14,
                         fontFamily: 'Poppins',
                         fontWeight: FontWeight.w400,
@@ -839,7 +845,7 @@ class _AlertListCard extends StatelessWidget {
       ),
     );
   }
-  
+
   static String _locationLabel(AlertModel alert) {
     if (alert.id.startsWith('preview-')) {
       return 'Kothrud, Pune, 411038';
@@ -863,18 +869,19 @@ class _EmptyAlertList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 22),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F7F7),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Text(
         message,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Color(0xFF555555),
+        style: TextStyle(
+          color: colorScheme.onSurfaceVariant,
           fontSize: 14,
           fontFamily: 'Poppins',
           fontWeight: FontWeight.w400,

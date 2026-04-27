@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
+import '../../app/router.dart';
 import '../../models/alert_model.dart';
 import '../../providers/alert_provider.dart';
 
@@ -67,9 +68,7 @@ class _MapScreenState extends State<MapScreen> {
     }
 
     final position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-      ),
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
 
     if (!mounted) {
@@ -107,10 +106,7 @@ class _MapScreenState extends State<MapScreen> {
       };
 
       return Marker(
-        point: LatLng(
-          alert.geoLocation.latitude,
-          alert.geoLocation.longitude,
-        ),
+        point: LatLng(alert.geoLocation.latitude, alert.geoLocation.longitude),
         width: 22,
         height: 22,
         child: Container(
@@ -161,6 +157,7 @@ class _MapScreenState extends State<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final alertProvider = context.watch<AlertProvider>();
     final alerts = alertProvider.alerts.toList();
 
@@ -184,7 +181,7 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
@@ -192,7 +189,9 @@ class _MapScreenState extends State<MapScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _MapHeader(
-                onNotificationTap: () {},
+                onNotificationTap: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
                 onCenterTap: _centerOnUser,
               ),
               const SizedBox(height: 12),
@@ -214,7 +213,6 @@ class _MapScreenState extends State<MapScreen> {
               const Text(
                 'Select the area nearby you',
                 style: TextStyle(
-                  color: Color(0xFF111111),
                   fontSize: 28,
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
@@ -231,8 +229,8 @@ class _MapScreenState extends State<MapScreen> {
                   const SizedBox(width: 6),
                   Text(
                     'Within ${_radiusLabel(_nearbyRadiusKm)} km',
-                    style: const TextStyle(
-                      color: Color(0xFF111111),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
                       fontSize: 14,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w500,
@@ -316,15 +314,16 @@ class _MapHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SizedBox(
       height: 44,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          const Text(
+          Text(
             'Map',
             style: TextStyle(
-              color: Color(0xFF111111),
+              color: colorScheme.onSurface,
               fontSize: 38,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w700,
@@ -335,7 +334,7 @@ class _MapHeader extends StatelessWidget {
             child: IconButton(
               onPressed: onCenterTap,
               icon: const Icon(Icons.my_location_outlined, size: 22),
-              color: const Color(0xFF111111),
+              color: colorScheme.onSurface,
               tooltip: 'Center map',
             ),
           ),
@@ -343,11 +342,8 @@ class _MapHeader extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: IconButton(
               onPressed: onNotificationTap,
-              icon: const Icon(
-                Icons.notifications_none_rounded,
-                size: 25,
-              ),
-              color: const Color(0xFF111111),
+              icon: const Icon(Icons.notifications_none_rounded, size: 25),
+              color: colorScheme.onSurface,
               tooltip: 'Notifications',
             ),
           ),
@@ -439,10 +435,7 @@ class _NearbyAlertCard extends StatelessWidget {
   final AlertModel alert;
   final double distanceMeters;
 
-  const _NearbyAlertCard({
-    required this.alert,
-    required this.distanceMeters,
-  });
+  const _NearbyAlertCard({required this.alert, required this.distanceMeters});
 
   String _distanceLabel() {
     if (distanceMeters < 1000) {
@@ -489,11 +482,12 @@ class _NearbyAlertCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F6F6),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -505,11 +499,7 @@ class _NearbyAlertCard extends StatelessWidget {
               color: Color(0xFFEFEFEF),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              _icon(),
-              size: 18,
-              color: const Color(0xFFE84C4C),
-            ),
+            child: Icon(_icon(), size: 18, color: const Color(0xFFE84C4C)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -520,8 +510,8 @@ class _NearbyAlertCard extends StatelessWidget {
                   alert.title.isEmpty ? 'Nearby incident' : alert.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF111111),
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 16,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w600,
@@ -530,8 +520,8 @@ class _NearbyAlertCard extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   '${_distanceLabel()} - ${_timeAgoLabel()}',
-                  style: const TextStyle(
-                    color: Color(0xFF757575),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w400,
@@ -559,17 +549,18 @@ class _EmptyNearbyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F6F6),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(18),
       ),
-      child: const Text(
+      child: Text(
         'No incidents found in the selected radius.',
         style: TextStyle(
-          color: Color(0xFF7E7E7E),
+          color: colorScheme.onSurfaceVariant,
           fontSize: 14,
           fontFamily: 'Poppins',
           fontWeight: FontWeight.w500,

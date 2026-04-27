@@ -69,12 +69,14 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     // State is watched here, but currently just uses placeholder static content.
     // You can wire this up to make your UI dynamic later.
     context.watch<AlertProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // SafeArea ensures UI doesn't overlap with the notch or status bar
       body: SafeArea(
         // Wrapping the column in a scroll view fixes your bottom overflow bug.
@@ -90,11 +92,11 @@ class _HomeScreenState extends State<HomeScreen>
                   },
                   onDismiss: _dismissAlert,
                 ),
-              _buildHeader(),
+              _buildHeader(colorScheme),
               const SizedBox(height: 16),
               _buildStatusCard(),
               const SizedBox(height: 24),
-              _buildHelpText(),
+              _buildHelpText(colorScheme),
               const SizedBox(height: 16),
               _buildSosCircles(context),
               const SizedBox(height: 16),
@@ -107,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── UI Components ────────────────────────────────────────────────────────
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ColorScheme colorScheme) {
     final auth = context.watch<AuthProvider>();
     final user = auth.userModel;
     final userName = user?.displayName ?? 'User';
@@ -122,16 +124,12 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               const Text(
                 'Hey!',
-                style: TextStyle(
-                  color: Color(0xFF070707),
-                  fontSize: 14,
-                  fontFamily: 'Poppins',
-                ),
+                style: TextStyle(fontSize: 14, fontFamily: 'Poppins'),
               ),
               Text(
                 userName,
-                style: const TextStyle(
-                  color: Color(0xFF070707),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
                   fontSize: 20,
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w600,
@@ -143,7 +141,9 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               IconButton(
                 icon: const Icon(Icons.notifications_none, size: 28),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
               ),
               Positioned(
                 right: 10,
@@ -231,14 +231,14 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildHelpText() {
-    return const Column(
+  Widget _buildHelpText(ColorScheme colorScheme) {
+    return Column(
       children: [
         Text.rich(
           TextSpan(
             text: 'Help is just a click away!\nClick ',
             style: TextStyle(
-              color: Color(0xFF424B5A),
+              color: colorScheme.onSurfaceVariant,
               fontSize: 14,
               fontFamily: 'Poppins',
             ),
