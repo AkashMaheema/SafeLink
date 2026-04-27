@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../models/alert_model.dart';
+import '../../providers/alert_provider.dart';
 import '../../services/alert_service.dart';
 
 const Color _dangerRed = Color(0xFFE02323);
@@ -316,6 +317,10 @@ class _SosScreenState extends State<SosScreen> {
       // Submit to Firestore
       final alertService = context.read<AlertService>();
       await alertService.createAlert(alert);
+      if (mounted) {
+        // Force-refresh the shared live stream so all screens reflect this alert immediately.
+        context.read<AlertProvider>().startListeningAll();
+      }
 
       // Note: In production, this would be handled by Cloud Functions.
       // We already subscribe to this topic on app launch in main.dart,
@@ -369,16 +374,16 @@ class _SosScreenState extends State<SosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'Report Emergency',
           style: TextStyle(
-            color: Color(0xFF212121),
             fontSize: 20,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w700,
@@ -411,12 +416,12 @@ class _SosScreenState extends State<SosScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? _dangerRed.withValues(alpha: 0.12)
-                              : Colors.white,
+                              : colorScheme.surface,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isSelected
                                 ? _dangerRed
-                                : const Color(0xFFE3E3E3),
+                                : colorScheme.outlineVariant,
                             width: isSelected ? 1.7 : 1,
                           ),
                         ),
@@ -435,7 +440,7 @@ class _SosScreenState extends State<SosScreen> {
                               type.label,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: const Color(0xFF212121),
+                                color: colorScheme.onSurface,
                                 fontFamily: 'Poppins',
                                 fontSize: 12,
                                 fontWeight: isSelected
@@ -522,17 +527,17 @@ class _SosScreenState extends State<SosScreen> {
                         hintText: 'Type location address',
                         prefixIcon: const Icon(Icons.location_on_outlined),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE9E9E9),
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE9E9E9),
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -603,9 +608,11 @@ class _SosScreenState extends State<SosScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE9E9E9)),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -617,18 +624,19 @@ class _SosScreenState extends State<SosScreen> {
                                   children: [
                                     Text(
                                       item.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontWeight: FontWeight.w600,
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                     Text(
                                       item.path,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
-                                        color: Color(0xFF6A6A6A),
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -690,14 +698,14 @@ class _SosScreenState extends State<SosScreen> {
                     hintText: 'Describe what happened, risks, and urgency...',
                     hintStyle: const TextStyle(fontFamily: 'Poppins'),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: colorScheme.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE9E9E9)),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE9E9E9)),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -756,11 +764,12 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F5FA),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -768,8 +777,8 @@ class _SectionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF212121),
+            style: TextStyle(
+              color: colorScheme.onSurface,
               fontSize: 16,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w600,
@@ -797,12 +806,13 @@ class _ProofActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        side: const BorderSide(color: Color(0xFFE9E9E9)),
-        backgroundColor: Colors.white,
+        side: BorderSide(color: colorScheme.outlineVariant),
+        backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Column(
@@ -879,10 +889,8 @@ class _LocationPickerScreen extends StatefulWidget {
 }
 
 class _LocationPickerScreenState extends State<_LocationPickerScreen> {
-  static const CameraPosition _fallbackCamera = CameraPosition(
-    target: LatLng(6.9271, 79.8612),
-    zoom: 13,
-  );
+  static const LatLng _fallbackCenter = LatLng(6.9271, 79.8612);
+  static const double _fallbackZoom = 13;
 
   LatLng? _picked;
 
@@ -894,9 +902,8 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initialPosition = widget.initial != null
-        ? CameraPosition(target: widget.initial!, zoom: 15)
-        : _fallbackCamera;
+    final initialCenter = widget.initial ?? _fallbackCenter;
+    final initialZoom = widget.initial == null ? _fallbackZoom : 15.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -918,19 +925,37 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
           ),
         ],
       ),
-      body: GoogleMap(
-        initialCameraPosition: initialPosition,
-        myLocationButtonEnabled: true,
-        myLocationEnabled: true,
-        onTap: (latLng) => setState(() => _picked = latLng),
-        markers: _picked == null
-            ? const <Marker>{}
-            : {
-                Marker(
-                  markerId: const MarkerId('selected-point'),
-                  position: _picked!,
-                ),
-              },
+      body: FlutterMap(
+        options: MapOptions(
+          initialCenter: initialCenter,
+          initialZoom: initialZoom,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+          ),
+          onTap: (_, latLng) => setState(() => _picked = latLng),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.safelink.safelink',
+          ),
+          MarkerLayer(
+            markers: _picked == null
+                ? const <Marker>[]
+                : [
+                    Marker(
+                      point: _picked!,
+                      width: 30,
+                      height: 30,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: _dangerRed,
+                        size: 30,
+                      ),
+                    ),
+                  ],
+          ),
+        ],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
