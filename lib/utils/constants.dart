@@ -5,6 +5,8 @@ class AppConstants {
   static const String usersCollection = 'users';
   static const String alertsCollection = 'alerts';
   static const String incidentsCollection = 'incidents';
+  static const String commentsSubcollection = 'comments';
+  static const String votesSubcollection = 'votes';
 
   // FCM topics
   static const String emergencyTopic = 'emergency_alerts';

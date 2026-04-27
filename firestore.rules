@@ -14,7 +14,8 @@ service cloud.firestore {
 
     // Users can read and write only their own profile document
     match /users/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read: if isSignedIn() && (request.auth.uid == uid || isPrivilegedUser());
+      allow write: if isSignedIn() && (request.auth.uid == uid || isPrivilegedUser());
     }
 
     // Alerts: any authenticated user can read and create their own alert;
@@ -24,6 +25,23 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.createdByUid == request.auth.uid;
       allow update, delete: if isPrivilegedUser();
+
+      // Votes subcollection: any signed-in user can read all votes,
+      // but can only write/delete their own vote document (doc id == uid).
+      match /votes/{uid} {
+        allow read: if isSignedIn();
+        allow write, delete: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Comments subcollection: any signed-in user can read and create;
+      // only the comment author can delete their own comment.
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn()
+          && request.resource.data.uid == request.auth.uid;
+        allow delete: if isSignedIn()
+          && resource.data.uid == request.auth.uid;
+      }
     }
 
     // Default deny everything else
