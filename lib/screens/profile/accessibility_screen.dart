@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../providers/caption_provider.dart';
+
 import '../../app/router.dart';
+import 'widgets/quick_actions_sheet.dart';
+import '../../providers/theme_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class AccessibilityScreen extends StatefulWidget {
   const AccessibilityScreen({super.key});
@@ -9,11 +16,7 @@ class AccessibilityScreen extends StatefulWidget {
 }
 
 class _AccessibilityScreenState extends State<AccessibilityScreen> {
-  bool _highContrast = false;
-  bool _largerText = false;
   bool _voiceAssistance = false;
-  bool _vibrationOnly = false;
-  bool _liveCaptions = false;
   bool _voiceControl = false;
   bool _largeTouchTargets = false;
   bool _assistiveGestures = false;
@@ -21,12 +24,14 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
   bool _plainLanguageAlerts = false;
 
   void _resetAll() {
+    final themeProvider = context.read<ThemeProvider>();
+    themeProvider.setHighContrast(false);
+    themeProvider.setLargerText(false);
+    final settingsProvider = context.read<SettingsProvider>();
+    settingsProvider.setVibrationOnly(false);
+    settingsProvider.setLiveCaptions(false);
     setState(() {
-      _highContrast = false;
-      _largerText = false;
       _voiceAssistance = false;
-      _vibrationOnly = false;
-      _liveCaptions = false;
       _voiceControl = false;
       _largeTouchTargets = false;
       _assistiveGestures = false;
@@ -37,6 +42,8 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final themeProvider = context.watch<ThemeProvider>();
     final switchTheme = SwitchTheme.of(context).copyWith(
       thumbColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
@@ -73,14 +80,14 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                         Icons.arrow_back_ios_new_rounded,
                         size: 22,
                       ),
-                      color: const Color(0xFF1C1C1C),
+                      color: colorScheme.onSurface,
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Accessibility',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Color(0xFF101010),
+                          color: colorScheme.onSurface,
                           fontFamily: 'Poppins',
                           fontSize: 30,
                           fontWeight: FontWeight.w700,
@@ -92,7 +99,7 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                         Navigator.pushNamed(context, AppRoutes.notifications);
                       },
                       icon: const Icon(Icons.notifications_none_rounded),
-                      color: const Color(0xFF1C1C1C),
+                      color: colorScheme.onSurface,
                     ),
                   ],
                 ),
@@ -112,11 +119,11 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Personalize your experience',
                             style: TextStyle(
-                              color: Color(0xFF121212),
+                              color: colorScheme.onSurface,
                               fontFamily: 'Poppins',
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -126,7 +133,7 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                           Text(
                             'Adjust contrast, text size, motion,\nand audio cues.',
                             style: TextStyle(
-                              color: Color(0xFF646B76),
+                              color: colorScheme.onSurfaceVariant,
                               fontFamily: 'Poppins',
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -146,15 +153,16 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                     _ToggleTile(
                       icon: Icons.contrast,
                       title: 'High contrast',
-                      value: _highContrast,
-                      onChanged: (value) =>
-                          setState(() => _highContrast = value),
+                      value: themeProvider.isHighContrast,
+                      onChanged: (value) {
+                        context.read<ThemeProvider>().setHighContrast(value);
+                      },
                     ),
                     _ToggleTile(
                       icon: Icons.zoom_in_outlined,
                       title: 'Larger text',
-                      value: _largerText,
-                      onChanged: (value) => setState(() => _largerText = value),
+                      value: themeProvider.isLargerText,
+                      onChanged: (value) { context.read<ThemeProvider>().setLargerText(value); },
                     ),
                     _ToggleTile(
                       icon: Icons.mic_none_rounded,
@@ -175,18 +183,26 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                       icon: Icons.volume_off_outlined,
                       title: 'Vibration Only',
                       subtitle: 'Mute tones, keep haptics for alerts',
-                      value: _vibrationOnly,
-                      onChanged: (value) =>
-                          setState(() => _vibrationOnly = value),
+                      value: context.watch<SettingsProvider>().isVibrationOnly,
+                      onChanged: (value) { context.read<SettingsProvider>().setVibrationOnly(value); if (value) HapticFeedback.heavyImpact(); },
                     ),
                     _ToggleTile(
                       icon: Icons.subtitles_outlined,
                       title: 'Live Captions',
                       subtitle: 'Show captions for audio in calls',
-                      value: _liveCaptions,
+                      value: context.watch<SettingsProvider>().isLiveCaptions,
+                      showDivider: true,
+                      onChanged: (value) { context.read<SettingsProvider>().setLiveCaptions(value); },
+                    ),
+                    _ActionTile(
+                      icon: Icons.message_outlined,
+                      title: 'Test Caption',
+                      subtitle: 'Broadcast a test message',
+                      buttonLabel: 'Test',
                       showDivider: false,
-                      onChanged: (value) =>
-                          setState(() => _liveCaptions = value),
+                      onPressed: () {
+                        context.read<CaptionProvider>().showCaption('[TEST ALERT] This is a mock Live Caption overlay.');
+                      },
                     ),
                   ],
                 ),
@@ -209,7 +225,14 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                       subtitle: 'Customize emergency shortcuts',
                       buttonLabel: 'Configure',
                       showDivider: false,
-                      onPressed: () {},
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const QuickActionsSheet(),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -346,12 +369,13 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
         title,
-        style: const TextStyle(
-          color: Color(0xFF6C6C6C),
+        style: TextStyle(
+          color: colorScheme.onSurfaceVariant,
           fontFamily: 'Poppins',
           fontSize: 13,
           fontWeight: FontWeight.w700,

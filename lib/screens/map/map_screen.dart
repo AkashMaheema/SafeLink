@@ -315,40 +315,34 @@ class _MapHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      height: 44,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Text(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          onPressed: onCenterTap,
+          icon: const Icon(Icons.my_location_outlined, size: 22),
+          color: colorScheme.onSurface,
+          tooltip: 'Center map',
+        ),
+        Expanded(
+          child: Text(
             'Map',
+            textAlign: TextAlign.center,
             style: TextStyle(
               color: colorScheme.onSurface,
-              fontSize: 38,
               fontFamily: 'Poppins',
+              fontSize: 30,
               fontWeight: FontWeight.w700,
             ),
           ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              onPressed: onCenterTap,
-              icon: const Icon(Icons.my_location_outlined, size: 22),
-              color: colorScheme.onSurface,
-              tooltip: 'Center map',
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: IconButton(
-              onPressed: onNotificationTap,
-              icon: const Icon(Icons.notifications_none_rounded, size: 25),
-              color: colorScheme.onSurface,
-              tooltip: 'Notifications',
-            ),
-          ),
-        ],
-      ),
+        ),
+        IconButton(
+          onPressed: onNotificationTap,
+          icon: const Icon(Icons.notifications_none_rounded, size: 25),
+          color: colorScheme.onSurface,
+          tooltip: 'Notifications',
+        ),
+      ],
     );
   }
 }
