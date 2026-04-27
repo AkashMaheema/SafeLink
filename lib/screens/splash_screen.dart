@@ -56,7 +56,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     text: 'Safe',
                     style: GoogleFonts.poppins(
                       fontSize: isSmall ? 52 : 64,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                       height: 1.0,
                       color: const Color(0xFF000000),
                     ),
