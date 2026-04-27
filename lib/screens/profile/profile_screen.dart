@@ -32,13 +32,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        const SizedBox(width: 48), // Balance the icon button for centering
+                        Expanded(
                           child: Text(
                             'Profile',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 44,
-                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
                               fontFamily: 'Poppins',
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
