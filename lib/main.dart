@@ -8,6 +8,7 @@ import 'app/app.dart';
 import 'providers/auth_provider.dart';
 import 'providers/alert_provider.dart';
 import 'providers/connectivity_provider.dart';
+import 'providers/theme_provider.dart';
 import 'services/auth_service.dart';
 import 'services/alert_service.dart';
 import 'services/firestore_service.dart';
@@ -50,11 +51,14 @@ Future<void> main() async {
   // ── FCM setup ────────────────────────────────────────────────────────────
   final messagingService = MessagingService();
   // Fire-and-forget FCM setup so it doesn't block runApp if Google Play Services is missing or slow
-  messagingService.init().then((_) {
-    return messagingService.subscribeToEmergencyAlerts();
-  }).catchError((e) {
-    debugPrint('FCM setup failed: $e');
-  });
+  messagingService
+      .init()
+      .then((_) {
+        return messagingService.subscribeToEmergencyAlerts();
+      })
+      .catchError((e) {
+        debugPrint('FCM setup failed: $e');
+      });
 
   // ── Run app ──────────────────────────────────────────────────────────────
   runApp(
@@ -83,6 +87,9 @@ Future<void> main() async {
         ChangeNotifierProvider<ConnectivityProvider>(
           create: (_) => ConnectivityProvider(),
         ),
+
+        // App theme mode
+        ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
       ],
       child: const SafeLinkApp(),
     ),

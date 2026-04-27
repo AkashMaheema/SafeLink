@@ -15,4 +15,5 @@ class AppConstants {
 
   // Shared prefs keys
   static const String onboardingDone = 'onboarding_done';
+  static const String darkModeEnabled = 'dark_mode_enabled';
 }
