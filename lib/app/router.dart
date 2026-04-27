@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import '../models/alert_model.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
 import '../screens/notifications/notifications_screen.dart';
+import '../screens/sos/alert_detail_screen.dart';
 import '../screens/sos/sos_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -19,6 +22,8 @@ class AppRoutes {
   static const String map = '/map';
   static const String profile = '/profile';
   static const String notifications = '/notifications';
+  static const String alertDetail = '/alert-detail';
+  static const String adminDashboard = '/admin';
 }
 
 /// Centralised route generator passed to [MaterialApp.onGenerateRoute].
@@ -41,6 +46,11 @@ class AppRouter {
         return _fade(const ProfileScreen());
       case AppRoutes.notifications:
         return _fade(const NotificationsScreen());
+      case AppRoutes.alertDetail:
+        final alert = settings.arguments as AlertModel;
+        return _slide(AlertDetailScreen(alert: alert));
+      case AppRoutes.adminDashboard:
+        return _slide(const AdminDashboardScreen());
       default:
         return _fade(const LoginScreen());
     }
@@ -50,6 +60,18 @@ class AppRouter {
     pageBuilder: (context, animation, secondaryAnimation) => page,
     transitionsBuilder: (context, animation, secondaryAnimation, child) =>
         FadeTransition(opacity: animation, child: child),
+    transitionDuration: const Duration(milliseconds: 300),
+  );
+
+  static PageRoute<T> _slide<T>(Widget page) => PageRouteBuilder<T>(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final tween = Tween(
+        begin: const Offset(1.0, 0.0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeInOut));
+      return SlideTransition(position: animation.drive(tween), child: child);
+    },
     transitionDuration: const Duration(milliseconds: 300),
   );
 }

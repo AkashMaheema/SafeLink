@@ -50,7 +50,9 @@ class _SosTabScreenState extends State<SosTabScreen> {
       }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       if (!mounted) {
@@ -90,12 +92,14 @@ class _SosTabScreenState extends State<SosTabScreen> {
     final nearbyAlert = nearbyAlerts.isEmpty ? null : nearbyAlerts.first;
     final othersAlerts = alerts
         .where(
-          (alert) => currentUserId == null || alert.createdByUid != currentUserId,
+          (alert) =>
+              currentUserId == null || alert.createdByUid != currentUserId,
         )
         .toList();
     final yourAlerts = alerts
         .where(
-          (alert) => currentUserId != null && alert.createdByUid == currentUserId,
+          (alert) =>
+              currentUserId != null && alert.createdByUid == currentUserId,
         )
         .toList();
     final sourceAlerts = _showOthers
@@ -172,7 +176,11 @@ class _SosTabScreenState extends State<SosTabScreen> {
     }
 
     if (userLocation != null) {
-      final nearby = _filterAlertsByDistance(alerts, userLocation, distanceFilterKm);
+      final nearby = _filterAlertsByDistance(
+        alerts,
+        userLocation,
+        distanceFilterKm,
+      );
       nearby.sort(_sortAlerts);
       return nearby;
     }
@@ -214,7 +222,8 @@ final List<AlertModel> _previewOthersAlerts = [
   AlertModel(
     id: 'preview-accident',
     title: 'Road Accident',
-    description: 'The incident involved the vehicle MH 41 AK 6543, which was involved.',
+    description:
+        'The incident involved the vehicle MH 41 AK 6543, which was involved.',
     alertLevel: AlertLevel.yellow,
     geoLocation: const AlertLocation(latitude: 18.5074, longitude: 73.8077),
     radius: 1000,
@@ -428,7 +437,11 @@ class _DangerHeroCard extends StatelessWidget {
               height: 39,
               child: FilledButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.map);
+                  Navigator.pushNamed(
+                    context,
+                    AppRoutes.alertDetail,
+                    arguments: alert,
+                  );
                 },
                 style: FilledButton.styleFrom(
                   backgroundColor: colorScheme.surface,
@@ -453,9 +466,7 @@ class _DangerHeroCard extends StatelessWidget {
               onPressed: () {
                 Navigator.pushNamed(context, AppRoutes.sos);
               },
-              style: TextButton.styleFrom(
-                foregroundColor: colorScheme.onError,
-              ),
+              style: TextButton.styleFrom(foregroundColor: colorScheme.onError),
               child: const Text(
                 'Report',
                 style: TextStyle(
@@ -639,20 +650,20 @@ class _AudienceChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
         decoration: BoxDecoration(
-          color: selected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.45)
-              : Colors.transparent,
+          color: selected ? const Color(0xFFFFE8E8) : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-            fontSize: 12,
+            color: selected
+                ? const Color(0xFFE12626)
+                : colorScheme.onSurfaceVariant,
+            fontSize: 13,
             fontFamily: 'Poppins',
-            fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),
@@ -682,61 +693,111 @@ class _DistanceRow extends StatelessWidget {
         Row(
           children: [
             Icon(
-              Icons.location_on_outlined,
-              size: 18,
+              Icons.location_searching_rounded,
+              size: 20,
               color: colorScheme.onSurface,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             Text(
               'Within ${_distanceLabel(distanceKm)}',
               style: TextStyle(
                 color: colorScheme.onSurface,
                 fontSize: 15,
                 fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 5,
+                  activeTrackColor: const Color(0xFFE12626),
+                  inactiveTrackColor: colorScheme.outlineVariant,
+                  thumbColor: const Color(0xFFE12626),
+                  overlayColor: const Color(0xFFE12626).withValues(alpha: 0.14),
+                  thumbShape: const _PillThumbShape(),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 14,
+                  ),
+                  trackShape: const RoundedRectSliderTrackShape(),
+                ),
+                child: Slider(
+                  value: distanceKm,
+                  min: 1,
+                  max: 10,
+                  divisions: 9,
+                  onChanged: onChanged,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 6,
-            activeTrackColor: colorScheme.primary,
-            inactiveTrackColor: colorScheme.outlineVariant,
-            thumbColor: colorScheme.primary,
-            overlayColor: colorScheme.primary.withValues(alpha: 0.14),
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-          ),
-          child: Slider(
-            value: distanceKm,
-            min: 1,
-            max: 10,
-            divisions: 9,
-            onChanged: onChanged,
-          ),
-        ),
         if (isResolvingLocation)
-          Text(
-            'Getting your location...',
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 12,
-              fontFamily: 'Poppins',
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Getting your location...',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                fontFamily: 'Poppins',
+              ),
             ),
           )
         else if (!hasLocation)
-          Text(
-            'Location unavailable. Showing all alerts instead of distance-filtered results.',
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 12,
-              fontFamily: 'Poppins',
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Location unavailable. Showing all alerts instead of distance-filtered results.',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                fontFamily: 'Poppins',
+              ),
             ),
           ),
       ],
     );
+  }
+}
+
+/// A wide pill-shaped slider thumb to match the screenshot.
+class _PillThumbShape extends SliderComponentShape {
+  const _PillThumbShape();
+
+  static const double _thumbWidth = 28;
+  static const double _thumbHeight = 18;
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size(_thumbWidth, _thumbHeight);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    final paint = Paint()
+      ..color = sliderTheme.thumbColor ?? const Color(0xFFE12626)
+      ..style = PaintingStyle.fill;
+
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center, width: _thumbWidth, height: _thumbHeight),
+      const Radius.circular(999),
+    );
+    canvas.drawRRect(rect, paint);
   }
 }
 
@@ -748,97 +809,111 @@ class _AlertListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  _locationLabel(alert),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w400,
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.alertDetail, arguments: alert);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Location + severity dot
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  size: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    _locationLabel(alert),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 11,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
-              ),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: _dotColor(alert.alertLevel),
-                  shape: BoxShape.circle,
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: _dotColor(alert.alertLevel),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  shape: BoxShape.circle,
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Icon + title + description
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F2F2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _iconForAlert(alert),
+                    color: const Color(0xFFE12626),
+                    size: 26,
+                  ),
                 ),
-                child: Icon(
-                  _iconForAlert(alert),
-                  color: const Color(0xFFE12626),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      alert.title,
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontSize: 15,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w700,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        alert.title,
+                        style: const TextStyle(
+                          color: Color(0xFF1A1A1A),
+                          fontSize: 15,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      alert.description,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 14,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w400,
-                        height: 1.45,
+                      const SizedBox(height: 5),
+                      Text(
+                        alert.description,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w400,
+                          height: 1.5,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
