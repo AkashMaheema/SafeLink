@@ -3,11 +3,13 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../models/alert_model.dart';
+import '../../providers/alert_provider.dart';
 import '../../services/alert_service.dart';
 
 const Color _dangerRed = Color(0xFFE02323);
@@ -315,6 +317,10 @@ class _SosScreenState extends State<SosScreen> {
       // Submit to Firestore
       final alertService = context.read<AlertService>();
       await alertService.createAlert(alert);
+      if (mounted) {
+        // Force-refresh the shared live stream so all screens reflect this alert immediately.
+        context.read<AlertProvider>().startListeningAll();
+      }
 
       // Note: In production, this would be handled by Cloud Functions.
       // We already subscribe to this topic on app launch in main.dart,
@@ -878,10 +884,8 @@ class _LocationPickerScreen extends StatefulWidget {
 }
 
 class _LocationPickerScreenState extends State<_LocationPickerScreen> {
-  static const CameraPosition _fallbackCamera = CameraPosition(
-    target: LatLng(6.9271, 79.8612),
-    zoom: 13,
-  );
+  static const LatLng _fallbackCenter = LatLng(6.9271, 79.8612);
+  static const double _fallbackZoom = 13;
 
   LatLng? _picked;
 
@@ -893,9 +897,8 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final initialPosition = widget.initial != null
-        ? CameraPosition(target: widget.initial!, zoom: 15)
-        : _fallbackCamera;
+    final initialCenter = widget.initial ?? _fallbackCenter;
+    final initialZoom = widget.initial == null ? _fallbackZoom : 15.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -917,19 +920,37 @@ class _LocationPickerScreenState extends State<_LocationPickerScreen> {
           ),
         ],
       ),
-      body: GoogleMap(
-        initialCameraPosition: initialPosition,
-        myLocationButtonEnabled: true,
-        myLocationEnabled: true,
-        onTap: (latLng) => setState(() => _picked = latLng),
-        markers: _picked == null
-            ? const <Marker>{}
-            : {
-                Marker(
-                  markerId: const MarkerId('selected-point'),
-                  position: _picked!,
-                ),
-              },
+      body: FlutterMap(
+        options: MapOptions(
+          initialCenter: initialCenter,
+          initialZoom: initialZoom,
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+          ),
+          onTap: (_, latLng) => setState(() => _picked = latLng),
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            userAgentPackageName: 'com.safelink.safelink',
+          ),
+          MarkerLayer(
+            markers: _picked == null
+                ? const <Marker>[]
+                : [
+                    Marker(
+                      point: _picked!,
+                      width: 30,
+                      height: 30,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: _dangerRed,
+                        size: 30,
+                      ),
+                    ),
+                  ],
+          ),
+        ],
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
