@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../app/router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import 'accessibility_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -11,15 +13,16 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _darkMode = false;
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final user = auth.userModel;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: user == null
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
@@ -29,21 +32,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        const SizedBox(width: 48), // Balance the icon button for centering
+                        Expanded(
                           child: Text(
                             'Profile',
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Color(0xFF121212),
-                              fontSize: 44,
-                              fontWeight: FontWeight.w700,
+                              color: colorScheme.onSurface,
                               fontFamily: 'Poppins',
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.notifications,
+                            );
+                          },
                           icon: const Icon(Icons.notifications_none_rounded),
-                          color: const Color(0xFF222222),
+                          color: colorScheme.onSurface,
                         ),
                       ],
                     ),
@@ -58,7 +68,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 22,
-                                  backgroundColor: const Color(0xFFE0E0E0),
+                                  backgroundColor:
+                                      colorScheme.surfaceContainerHighest,
                                   backgroundImage: user.photoUrl != null
                                       ? NetworkImage(user.photoUrl!)
                                       : null,
@@ -68,10 +79,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               ? user.displayName[0]
                                                     .toUpperCase()
                                               : '?',
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontFamily: 'Poppins',
                                             fontWeight: FontWeight.w700,
-                                            color: Color(0xFF333333),
+                                            color: colorScheme.onSurface,
                                           ),
                                         )
                                       : null,
@@ -87,10 +98,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(
+                                          color: Color(0xFF121212),
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w700,
                                           fontSize: 16,
-                                          color: Color(0xFF121212),
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -98,11 +109,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         user.isVerified
                                             ? 'Verified Account'
                                             : 'Unverified Account',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontFamily: 'Poppins',
                                           fontWeight: FontWeight.w500,
                                           fontSize: 11,
-                                          color: Color(0xFF818181),
+                                          color: colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -176,11 +187,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     icon: Icons.dark_mode_outlined,
                                     label: 'Dark Mode',
                                     trailing: Switch(
-                                      value: _darkMode,
+                                      value: themeProvider.isDarkMode,
                                       onChanged: (value) {
-                                        setState(() => _darkMode = value);
+                                        context
+                                            .read<ThemeProvider>()
+                                            .setDarkMode(value);
                                       },
-                                      activeColor: const Color(0xFFE02323),
+                                      activeThumbColor: const Color(0xFFE02323),
                                       materialTapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
                                     ),
@@ -240,7 +253,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
     );
   }
-  
 
   Future<void> _confirmSignOut(BuildContext context) async {
     final ok = await showDialog<bool>(
@@ -279,12 +291,13 @@ class _ActionPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final bgColor = isDanger
-        ? const Color(0xFFFFEAEA)
-        : const Color(0xFFECECEC);
+        ? colorScheme.errorContainer.withValues(alpha: 0.55)
+        : colorScheme.surfaceContainerHighest;
     final fgColor = isDanger
-        ? const Color(0xFFE02323)
-        : const Color(0xFF3A3A3A);
+        ? colorScheme.onErrorContainer
+        : colorScheme.onSurface;
 
     return Container(
       height: 36,
@@ -333,6 +346,7 @@ class _SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final rightWidget =
         trailing ??
         (trailingText != null
@@ -340,16 +354,16 @@ class _SettingsRow extends StatelessWidget {
                 trailingText!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Color(0xFF8B8B8B),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 12,
                   fontFamily: 'Poppins',
                   fontWeight: FontWeight.w500,
                 ),
               )
-            : const Icon(
+            : Icon(
                 Icons.chevron_right_rounded,
-                color: Color(0xFF898989),
+                color: colorScheme.onSurfaceVariant,
               ));
 
     return InkWell(
@@ -361,14 +375,14 @@ class _SettingsRow extends StatelessWidget {
           children: [
             SizedBox(
               width: 24,
-              child: Icon(icon, color: const Color(0xFF262626), size: 17),
+              child: Icon(icon, color: colorScheme.onSurface, size: 17),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: Color(0xFF1F1F1F),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
                   fontFamily: 'Poppins',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,

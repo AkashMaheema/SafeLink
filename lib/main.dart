@@ -8,6 +8,9 @@ import 'app/app.dart';
 import 'providers/auth_provider.dart';
 import 'providers/alert_provider.dart';
 import 'providers/connectivity_provider.dart';
+import 'providers/theme_provider.dart';
+import 'providers/settings_provider.dart';
+import 'providers/caption_provider.dart';
 import 'services/auth_service.dart';
 import 'services/alert_service.dart';
 import 'services/firestore_service.dart';
@@ -50,11 +53,14 @@ Future<void> main() async {
   // ── FCM setup ────────────────────────────────────────────────────────────
   final messagingService = MessagingService();
   // Fire-and-forget FCM setup so it doesn't block runApp if Google Play Services is missing or slow
-  messagingService.init().then((_) {
-    return messagingService.subscribeToEmergencyAlerts();
-  }).catchError((e) {
-    debugPrint('FCM setup failed: $e');
-  });
+  messagingService
+      .init()
+      .then((_) {
+        return messagingService.subscribeToEmergencyAlerts();
+      })
+      .catchError((e) {
+        debugPrint('FCM setup failed: $e');
+      });
 
   // ── Run app ──────────────────────────────────────────────────────────────
   runApp(
@@ -72,17 +78,26 @@ Future<void> main() async {
           update: (_, authService, prev) => prev ?? AuthProvider(authService),
         ),
 
-        // Alerts — depends on AlertService
-        ChangeNotifierProxyProvider<AlertService, AlertProvider>(
-          create: (ctx) => AlertProvider(ctx.read<AlertService>()),
-          update: (_, alertService, prev) =>
-              prev ?? AlertProvider(alertService),
+        // Caption state
+        ChangeNotifierProvider<CaptionProvider>(create: (_) => CaptionProvider()),
+
+        // Alerts — depends on AlertService and CaptionProvider
+        ChangeNotifierProxyProvider2<AlertService, CaptionProvider, AlertProvider>(
+          create: (ctx) => AlertProvider(ctx.read<AlertService>(), ctx.read<CaptionProvider>()),
+          update: (_, alertService, captionProvider, prev) =>
+              prev ?? AlertProvider(alertService, captionProvider),
         ),
 
         // Network connectivity
         ChangeNotifierProvider<ConnectivityProvider>(
           create: (_) => ConnectivityProvider(),
         ),
+
+        // App theme mode
+        ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
+
+        // Settings
+        ChangeNotifierProvider<SettingsProvider>(create: (_) => SettingsProvider()),
       ],
       child: const SafeLinkApp(),
     ),
