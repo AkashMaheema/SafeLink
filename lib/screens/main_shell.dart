@@ -54,17 +54,20 @@ class _MainBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(13),
+            color: Colors.black.withAlpha(isDark ? 40 : 13),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -78,8 +81,8 @@ class _MainBottomNav extends StatelessWidget {
             final item = _items[index];
             final isActive = currentIndex == index;
             final color = isActive
-                ? const Color(0xFFE02323)
-                : const Color(0xFFA4A4A4);
+                ? colorScheme.primary
+                : colorScheme.onSurfaceVariant;
 
             return InkWell(
               onTap: () => onTap(index),

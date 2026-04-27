@@ -374,16 +374,16 @@ class _SosScreenState extends State<SosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
+        backgroundColor: colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         title: const Text(
           'Report Emergency',
           style: TextStyle(
-            color: Color(0xFF212121),
             fontSize: 20,
             fontFamily: 'Poppins',
             fontWeight: FontWeight.w700,
@@ -416,12 +416,12 @@ class _SosScreenState extends State<SosScreen> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? _dangerRed.withValues(alpha: 0.12)
-                              : Colors.white,
+                              : colorScheme.surface,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isSelected
                                 ? _dangerRed
-                                : const Color(0xFFE3E3E3),
+                                : colorScheme.outlineVariant,
                             width: isSelected ? 1.7 : 1,
                           ),
                         ),
@@ -440,7 +440,7 @@ class _SosScreenState extends State<SosScreen> {
                               type.label,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                color: const Color(0xFF212121),
+                                color: colorScheme.onSurface,
                                 fontFamily: 'Poppins',
                                 fontSize: 12,
                                 fontWeight: isSelected
@@ -527,17 +527,17 @@ class _SosScreenState extends State<SosScreen> {
                         hintText: 'Type location address',
                         prefixIcon: const Icon(Icons.location_on_outlined),
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE9E9E9),
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(
-                            color: Color(0xFFE9E9E9),
+                          borderSide: BorderSide(
+                            color: colorScheme.outlineVariant,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -608,9 +608,11 @@ class _SosScreenState extends State<SosScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: colorScheme.surface,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE9E9E9)),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -622,18 +624,19 @@ class _SosScreenState extends State<SosScreen> {
                                   children: [
                                     Text(
                                       item.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontFamily: 'Poppins',
                                         fontWeight: FontWeight.w600,
+                                        color: colorScheme.onSurface,
                                       ),
                                     ),
                                     Text(
                                       item.path,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
-                                        color: Color(0xFF6A6A6A),
+                                        color: colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -695,14 +698,14 @@ class _SosScreenState extends State<SosScreen> {
                     hintText: 'Describe what happened, risks, and urgency...',
                     hintStyle: const TextStyle(fontFamily: 'Poppins'),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: colorScheme.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE9E9E9)),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: Color(0xFFE9E9E9)),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -761,11 +764,12 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F5FA),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
       ),
       child: Column(
@@ -773,8 +777,8 @@ class _SectionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Color(0xFF212121),
+            style: TextStyle(
+              color: colorScheme.onSurface,
               fontSize: 16,
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w600,
@@ -802,12 +806,13 @@ class _ProofActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        side: const BorderSide(color: Color(0xFFE9E9E9)),
-        backgroundColor: Colors.white,
+        side: BorderSide(color: colorScheme.outlineVariant),
+        backgroundColor: colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Column(
