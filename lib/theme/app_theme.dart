@@ -14,9 +14,20 @@ class AppTheme {
       brightness: Brightness.light,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: primaryColor,
-      foregroundColor: Colors.white,
+      backgroundColor: Colors.white,
+      foregroundColor: Color(0xFF121212),
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFFE6E6E6),
+      thickness: 1,
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: Color(0xFFA4A4A4),
+      elevation: 12,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -42,6 +53,17 @@ class AppTheme {
       backgroundColor: surfaceDark,
       foregroundColor: Colors.white,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF2D2D2D),
+      thickness: 1,
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: surfaceDark,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: Color(0xFF8F8F8F),
+      elevation: 12,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(

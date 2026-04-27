@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../screens/splash_screen.dart';
 import '../theme/app_theme.dart';
+import '../providers/theme_provider.dart';
 import 'router.dart';
 
 class SafeLinkApp extends StatelessWidget {
@@ -8,6 +10,8 @@ class SafeLinkApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+
     return MaterialApp(
       title: 'SafeLink',
       debugShowCheckedModeBanner: false,
@@ -15,7 +19,7 @@ class SafeLinkApp extends StatelessWidget {
       // ── Themes ──────────────────────────────────────────────────────────
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // respects device setting
+      themeMode: themeProvider.themeMode,
       // ── Routing ─────────────────────────────────────────────────────────
       onGenerateRoute: AppRouter.onGenerateRoute,
 
