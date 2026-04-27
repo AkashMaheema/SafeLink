@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
+import '../screens/notifications/notifications_screen.dart';
 import '../screens/sos/sos_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/profile/profile_screen.dart';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String sos = '/sos';
   static const String map = '/map';
   static const String profile = '/profile';
+  static const String notifications = '/notifications';
 }
 
 /// Centralised route generator passed to [MaterialApp.onGenerateRoute].
@@ -37,6 +39,8 @@ class AppRouter {
         return _fade(const MapScreen());
       case AppRoutes.profile:
         return _fade(const ProfileScreen());
+      case AppRoutes.notifications:
+        return _fade(const NotificationsScreen());
       default:
         return _fade(const LoginScreen());
     }

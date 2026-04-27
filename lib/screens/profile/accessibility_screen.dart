@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../app/router.dart';
 
 class AccessibilityScreen extends StatefulWidget {
   const AccessibilityScreen({super.key});
@@ -55,7 +56,7 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F3F3),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Theme(
         data: Theme.of(context).copyWith(switchTheme: switchTheme),
         child: SafeArea(
@@ -87,7 +88,9 @@ class _AccessibilityScreenState extends State<AccessibilityScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushNamed(context, AppRoutes.notifications);
+                      },
                       icon: const Icon(Icons.notifications_none_rounded),
                       color: const Color(0xFF1C1C1C),
                     ),
@@ -365,11 +368,12 @@ class _ToggleGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F4F4),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFD7D7D7)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(children: children),
     );
@@ -395,16 +399,17 @@ class _ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(bottom: BorderSide(color: Color(0xFFD7D7D7)))
+            ? Border(bottom: BorderSide(color: colorScheme.outlineVariant))
             : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: const Color(0xFF1F2630)),
+          Icon(icon, size: 20, color: colorScheme.onSurface),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -412,8 +417,8 @@ class _ToggleTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF202020),
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontFamily: 'Poppins',
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -422,8 +427,8 @@ class _ToggleTile extends StatelessWidget {
                 if (subtitle != null)
                   Text(
                     subtitle!,
-                    style: const TextStyle(
-                      color: Color(0xFF6D6D6D),
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
                       fontFamily: 'Poppins',
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -458,16 +463,17 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(bottom: BorderSide(color: Color(0xFFD7D7D7)))
+            ? Border(bottom: BorderSide(color: colorScheme.outlineVariant))
             : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: const Color(0xFF1F2630)),
+          Icon(icon, size: 20, color: colorScheme.onSurface),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -475,8 +481,8 @@ class _ActionTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Color(0xFF202020),
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontFamily: 'Poppins',
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -484,8 +490,8 @@ class _ActionTile extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF6D6D6D),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
                     fontFamily: 'Poppins',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -497,8 +503,8 @@ class _ActionTile extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onPressed,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF151B26),
-              side: const BorderSide(color: Color(0xFFCBCBCB)),
+              foregroundColor: colorScheme.onSurface,
+              side: BorderSide(color: colorScheme.outlineVariant),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(28),
               ),
