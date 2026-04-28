@@ -25,4 +25,10 @@ class AppConstants {
   static const String defaultSosAction = 'default_sos_action';
   static const String shakeToSosEnabled = 'shake_to_sos_enabled';
   static const String silentSosEnabled = 'silent_sos_enabled';
+
+  // SOS Setup screen
+  static const String sosAlertRadiusKm = 'sos_alert_radius_km';
+  static const String sosSendLocation = 'sos_send_location';
+  static const String sosEmergencyContact = 'sos_emergency_contact';
+  static const String sosAlertTheme = 'sos_alert_theme';
 }

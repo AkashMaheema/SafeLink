@@ -14,12 +14,23 @@ class SettingsProvider extends ChangeNotifier {
   bool _isSilentSos = false;
   bool _isLoaded = false;
 
+  // SOS Setup settings
+  double _sosAlertRadiusKm = 30.0;
+  bool _sosSendLocation = true;
+  String _sosEmergencyContact = '';
+  String _sosAlertTheme = 'Default Theme';
+
   bool get isVibrationOnly => _isVibrationOnly;
   bool get isLiveCaptions => _isLiveCaptions;
   String get defaultSosAction => _defaultSosAction;
   bool get isShakeToSos => _isShakeToSos;
   bool get isSilentSos => _isSilentSos;
   bool get isLoaded => _isLoaded;
+
+  double get sosAlertRadiusKm => _sosAlertRadiusKm;
+  bool get sosSendLocation => _sosSendLocation;
+  String get sosEmergencyContact => _sosEmergencyContact;
+  String get sosAlertTheme => _sosAlertTheme;
 
   SettingsProvider() {
     _loadSettingsPreference();
@@ -34,6 +45,10 @@ class SettingsProvider extends ChangeNotifier {
         prefs.getString(AppConstants.defaultSosAction) ?? 'Notify Contacts';
     _isShakeToSos = prefs.getBool(AppConstants.shakeToSosEnabled) ?? false;
     _isSilentSos = prefs.getBool(AppConstants.silentSosEnabled) ?? false;
+    _sosAlertRadiusKm = prefs.getDouble(AppConstants.sosAlertRadiusKm) ?? 30.0;
+    _sosSendLocation = prefs.getBool(AppConstants.sosSendLocation) ?? true;
+    _sosEmergencyContact = prefs.getString(AppConstants.sosEmergencyContact) ?? '';
+    _sosAlertTheme = prefs.getString(AppConstants.sosAlertTheme) ?? 'Default Theme';
     _isLoaded = true;
     notifyListeners();
   }
@@ -111,5 +126,35 @@ class SettingsProvider extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConstants.silentSosEnabled, enabled);
+  }
+
+  // ── SOS Setup setters ────────────────────────────────────────────────────
+
+  Future<void> setSosAlertRadiusKm(double km) async {
+    _sosAlertRadiusKm = km;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(AppConstants.sosAlertRadiusKm, km);
+  }
+
+  Future<void> setSosSendLocation(bool enabled) async {
+    _sosSendLocation = enabled;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.sosSendLocation, enabled);
+  }
+
+  Future<void> setSosEmergencyContact(String contact) async {
+    _sosEmergencyContact = contact;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.sosEmergencyContact, contact);
+  }
+
+  Future<void> setSosAlertTheme(String theme) async {
+    _sosAlertTheme = theme;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConstants.sosAlertTheme, theme);
   }
 }

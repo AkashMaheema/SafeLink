@@ -6,6 +6,10 @@ import '../providers/theme_provider.dart';
 import '../widgets/live_caption_overlay.dart';
 import 'router.dart';
 
+/// Global navigator key — used by NotificationService to push routes
+/// from notification tap callbacks without a BuildContext.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class SafeLinkApp extends StatelessWidget {
   const SafeLinkApp({super.key});
 
@@ -16,6 +20,7 @@ class SafeLinkApp extends StatelessWidget {
     return MaterialApp(
       title: 'SafeLink',
       debugShowCheckedModeBanner: false,
+      navigatorKey: navigatorKey,
 
       // ── Themes ──────────────────────────────────────────────────────────
       theme: themeProvider.isHighContrast
@@ -46,3 +51,4 @@ class SafeLinkApp extends StatelessWidget {
     );
   }
 }
+
