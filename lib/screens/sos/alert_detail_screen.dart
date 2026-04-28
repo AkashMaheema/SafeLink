@@ -7,6 +7,7 @@ import '../../models/alert_model.dart';
 import '../../models/comment_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/interaction_service.dart';
+import '../../services/storage_service.dart';
 
 class AlertDetailScreen extends StatefulWidget {
   final AlertModel alert;
@@ -88,11 +89,7 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
                     const SizedBox(height: 8),
                     _DescriptionCard(alert: widget.alert),
                     const SizedBox(height: 24),
-                    _SectionHeader(title: 'Images/Videos'),
-                    const SizedBox(height: 8),
-                    const _MediaRow(),
-                    const SizedBox(height: 16),
-                    const _AudioRow(),
+                    _ProofSection(alert: widget.alert),
                     const SizedBox(height: 28),
                     _TipsSection(alert: widget.alert),
                     const SizedBox(height: 32),
@@ -115,6 +112,19 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
 
 // ── Verified badge + vote-driven progress bar ─────────────────────────────────
 
+// Maps emergency title keywords → icon + color
+IconData _iconForAlert(AlertModel alert) {
+  final t = alert.title.toLowerCase();
+  if (t.contains('accident')) return Icons.car_crash_rounded;
+  if (t.contains('fire')) return Icons.local_fire_department_rounded;
+  if (t.contains('medical')) return Icons.medical_services_rounded;
+  if (t.contains('flood')) return Icons.water_damage_rounded;
+  if (t.contains('quake')) return Icons.terrain_rounded;
+  if (t.contains('robbery')) return Icons.lock_open_rounded;
+  if (t.contains('assault')) return Icons.report_problem_rounded;
+  return Icons.crisis_alert_rounded;
+}
+
 class _VerifiedBadge extends StatelessWidget {
   final AlertModel alert;
   final InteractionService interactionService;
@@ -134,11 +144,7 @@ class _VerifiedBadge extends StatelessWidget {
             color: Color(0xFFE12626),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.crisis_alert_rounded,
-            color: Colors.white,
-            size: 32,
-          ),
+          child: Icon(_iconForAlert(alert), color: Colors.white, size: 32),
         ),
         const SizedBox(height: 8),
         Text(
@@ -796,79 +802,115 @@ class _DescriptionCard extends StatelessWidget {
   }
 }
 
-// ── Media row ─────────────────────────────────────────────────────────────────
+// ── Proof section (images from Firestore proofs subcollection) ───────────────
 
-class _MediaRow extends StatelessWidget {
-  const _MediaRow();
+class _ProofSection extends StatelessWidget {
+  final AlertModel alert;
+
+  const _ProofSection({required this.alert});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: List.generate(3, (index) {
-        final isVideo = index == 2;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: index < 2 ? 8 : 0),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: isVideo
-                    ? Center(
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.55),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.play_arrow_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      )
-                    : Icon(
-                        Icons.image_outlined,
-                        color: colorScheme.onSurfaceVariant,
-                        size: 28,
-                      ),
-              ),
+    final proofService = ProofStorageService();
+
+    return StreamBuilder<List<ProofDocument>>(
+      stream: proofService.streamProofs(alert.id),
+      builder: (context, snap) {
+        // Still loading — show nothing (avoids flicker)
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        final proofs = snap.data ?? [];
+        if (proofs.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            const _SectionHeader(title: 'Images / Proof'),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: proofs
+                  .map((proof) => _ProofThumbnail(proof: proof))
+                  .toList(),
             ),
-          ),
+          ],
         );
-      }),
+      },
     );
   }
 }
 
-// ── Audio row ─────────────────────────────────────────────────────────────────
+class _ProofThumbnail extends StatelessWidget {
+  final ProofDocument proof;
 
-class _AudioRow extends StatelessWidget {
-  const _AudioRow();
+  const _ProofThumbnail({required this.proof});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(Icons.play_arrow_rounded, size: 22, color: colorScheme.onSurface),
-        const SizedBox(width: 8),
-        Text(
-          'recorded audio',
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontFamily: 'Poppins',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-          ),
+    final size = (MediaQuery.of(context).size.width - 40 - 16) / 3;
+
+    return GestureDetector(
+      onTap: () => _showFullScreen(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: proof.base64.isNotEmpty
+              ? Image.memory(
+                  proof.bytes,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _placeholder(colorScheme),
+                )
+              : _placeholder(colorScheme),
         ),
-      ],
+      ),
+    );
+  }
+
+  Widget _placeholder(ColorScheme cs) => Container(
+    color: cs.surfaceContainerHighest,
+    child: Icon(
+      Icons.broken_image_outlined,
+      color: cs.onSurfaceVariant,
+      size: 28,
+    ),
+  );
+
+  void _showFullScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => _FullScreenImage(proof: proof)),
+    );
+  }
+}
+
+class _FullScreenImage extends StatelessWidget {
+  final ProofDocument proof;
+
+  const _FullScreenImage({required this.proof});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          proof.fileName,
+          style: const TextStyle(fontSize: 14, color: Colors.white70),
+        ),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          child: Image.memory(proof.bytes, fit: BoxFit.contain),
+        ),
+      ),
     );
   }
 }

@@ -86,6 +86,9 @@ class AlertModel {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  /// Download URLs of uploaded proof files (photos, videos, audio).
+  final List<String> proofUrls;
+
   const AlertModel({
     required this.id,
     required this.title,
@@ -98,6 +101,7 @@ class AlertModel {
     required this.createdByUid,
     required this.createdAt,
     this.updatedAt,
+    this.proofUrls = const [],
   });
 
   // ── Factories ────────────────────────────────────────────────────────────
@@ -135,6 +139,11 @@ class AlertModel {
       createdByUid: m['createdByUid'] as String? ?? '',
       createdAt: (m['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       updatedAt: (m['updatedAt'] as Timestamp?)?.toDate(),
+      proofUrls:
+          (m['proofUrls'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
     );
   }
 
@@ -151,6 +160,7 @@ class AlertModel {
     'createdByUid': createdByUid,
     'createdAt': Timestamp.fromDate(createdAt),
     if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    'proofUrls': proofUrls,
   };
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -168,6 +178,7 @@ class AlertModel {
     AlertLocation? geoLocation,
     double? radius,
     bool? verifiedByGovernment,
+    List<String>? proofUrls,
   }) => AlertModel(
     id: id,
     title: title ?? this.title,
@@ -180,6 +191,7 @@ class AlertModel {
     createdByUid: createdByUid,
     createdAt: createdAt,
     updatedAt: DateTime.now(),
+    proofUrls: proofUrls ?? this.proofUrls,
   );
 
   @override

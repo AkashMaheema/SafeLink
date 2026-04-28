@@ -102,9 +102,7 @@ class _SosTabScreenState extends State<SosTabScreen> {
               currentUserId != null && alert.createdByUid == currentUserId,
         )
         .toList();
-    final sourceAlerts = _showOthers
-        ? (othersAlerts.isEmpty ? _previewOthersAlerts : othersAlerts)
-        : (yourAlerts.isEmpty ? _previewYourAlerts : yourAlerts);
+    final sourceAlerts = _showOthers ? othersAlerts : yourAlerts;
     final selectedAlerts = _filterAlertsByDistance(
       sourceAlerts,
       activeLocation,
@@ -218,42 +216,7 @@ class _SosTabScreenState extends State<SosTabScreen> {
   }
 }
 
-final List<AlertModel> _previewOthersAlerts = [
-  AlertModel(
-    id: 'preview-accident',
-    title: 'Road Accident',
-    description:
-        'The incident involved the vehicle MH 41 AK 6543, which was involved.',
-    alertLevel: AlertLevel.yellow,
-    geoLocation: const AlertLocation(latitude: 18.5074, longitude: 73.8077),
-    radius: 1000,
-    createdByUid: 'preview-other',
-    createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
-  ),
-  AlertModel(
-    id: 'preview-flood',
-    title: 'Flooding',
-    description: 'Flooding reported, move to higher ground.',
-    alertLevel: AlertLevel.red,
-    geoLocation: const AlertLocation(latitude: 18.5074, longitude: 73.8077),
-    radius: 1500,
-    createdByUid: 'preview-other-2',
-    createdAt: DateTime.now().subtract(const Duration(minutes: 3)),
-  ),
-];
 
-final List<AlertModel> _previewYourAlerts = [
-  AlertModel(
-    id: 'preview-your-report',
-    title: 'Road Accident',
-    description: 'Your submitted alert is still visible to nearby users.',
-    alertLevel: AlertLevel.yellow,
-    geoLocation: const AlertLocation(latitude: 18.5074, longitude: 73.8077),
-    radius: 1000,
-    createdByUid: 'preview-you',
-    createdAt: DateTime.now().subtract(const Duration(minutes: 18)),
-  ),
-];
 
 class _Header extends StatelessWidget {
   final String title;
@@ -388,9 +351,9 @@ class _DangerHeroCard extends StatelessWidget {
                     color: colorScheme.surface,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.crisis_alert_outlined,
-                    color: Color(0xFFE12626),
+                  child: Icon(
+                    _iconForAlert(alert),
+                    color: const Color(0xFFE12626),
                     size: 24,
                   ),
                 ),
@@ -612,20 +575,22 @@ class _AudienceSwitch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 10,
-      runSpacing: 10,
+    return Row(
       children: [
-        _AudienceChip(
-          label: 'Reported By Others',
-          selected: showOthers,
-          onTap: () => onChanged(true),
+        Expanded(
+          child: _AudienceChip(
+            label: 'Reported By Others',
+            selected: showOthers,
+            onTap: () => onChanged(true),
+          ),
         ),
-        _AudienceChip(
-          label: 'Reported By You',
-          selected: !showOthers,
-          onTap: () => onChanged(false),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _AudienceChip(
+            label: 'Reported By You',
+            selected: !showOthers,
+            onTap: () => onChanged(false),
+          ),
         ),
       ],
     );
@@ -650,13 +615,15 @@ class _AudienceChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFFFFE8E8) : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: selected
                 ? const Color(0xFFE12626)

@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../auth/login_screen.dart';
 import '../../providers/theme_provider.dart';
+import '../../widgets/auth_gate.dart';
 
 class PreLoginPreferencesScreen extends StatefulWidget {
   final VoidCallback onGetStarted;
@@ -37,10 +37,13 @@ class _PreLoginPreferencesScreenState extends State<PreLoginPreferencesScreen> {
 
     if (!mounted) return;
 
+    // Push AuthGate — it reactively shows LoginScreen or MainShell
+    // depending on auth state, so Google Sign-In redirect works correctly.
     Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const LoginScreen(),
-        transitionsBuilder: (_, animation, __, child) =>
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const AuthGate(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 300),
       ),
@@ -410,7 +413,7 @@ class _SwitchPreferenceRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: const Color(0xFF83868D),
           inactiveThumbColor: Colors.white,
           inactiveTrackColor: const Color(0xFFC9CDD4),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../auth/login_screen.dart';
 import 'pre_login_preferences_screen.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -51,23 +49,6 @@ class _LandingScreenState extends State<LandingScreen> {
     super.dispose();
   }
 
-  Future<void> _finishLanding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(LandingScreen.seenOnboardingKey, true);
-
-    if (!mounted) return;
-
-    Navigator.of(context).pushAndRemoveUntil(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const LoginScreen(),
-        transitionsBuilder: (_, animation, __, child) =>
-            FadeTransition(opacity: animation, child: child),
-        transitionDuration: const Duration(milliseconds: 300),
-      ),
-      (route) => false,
-    );
-  }
-
   void _skipToSetup() {
     _openSetupScreen();
   }
@@ -76,7 +57,7 @@ class _LandingScreenState extends State<LandingScreen> {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) =>
-            PreLoginPreferencesScreen(onGetStarted: _finishLanding),
+            PreLoginPreferencesScreen(onGetStarted: () {}),
         transitionsBuilder: (_, animation, __, child) =>
             FadeTransition(opacity: animation, child: child),
         transitionDuration: const Duration(milliseconds: 300),

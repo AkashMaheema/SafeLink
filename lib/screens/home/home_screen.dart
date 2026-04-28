@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import '../../app/router.dart';
 import '../../models/alert_model.dart';
@@ -19,7 +20,15 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulseScale;
+  late final MessagingService _messagingService;
   AlertModel? _activeAlert;
+
+  /// Device location resolved once on init.
+  AlertLocation? _deviceLocation;
+  bool _isResolvingLocation = true;
+
+  /// Fixed radius used to decide if the user is "near danger".
+  static const double _nearbyRadiusKm = 5.0;
 
   @override
   void initState() {
@@ -33,22 +42,58 @@ class _HomeScreenState extends State<HomeScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Listen for incoming emergency alerts
-    final messagingService = context.read<MessagingService>();
-    messagingService.onAlertReceived(_onAlertReceived);
+    // Listen for incoming emergency alerts.
+    _messagingService = context.read<MessagingService>();
+    _messagingService.onAlertReceived(_onAlertReceived);
 
     // Subscribe to emergency alerts topic
-    messagingService.subscribeToEmergencyAlerts();
+    _messagingService.subscribeToEmergencyAlerts();
+
+    _loadDeviceLocation();
+  }
+
+  Future<void> _loadDeviceLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) setState(() => _isResolvingLocation = false);
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (mounted) setState(() => _isResolvingLocation = false);
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _deviceLocation = AlertLocation(
+          latitude: position.latitude,
+          longitude: position.longitude,
+        );
+        _isResolvingLocation = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _isResolvingLocation = false);
+    }
   }
 
   void _onAlertReceived(AlertModel alert) {
-    if (!mounted) {
-      return;
-    }
-
+    if (!mounted) return;
     setState(() => _activeAlert = alert);
-
-    // Show red blinking notification overlay
     NotificationOverlayService().showAlertOverlay(context, alert);
   }
 
@@ -60,41 +105,70 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _pulseController.dispose();
-    if (mounted) {
-      final messagingService = context.read<MessagingService>();
-      messagingService.unsubscribeFromEmergencyAlerts();
-    }
+    _messagingService.unsubscribeFromEmergencyAlerts();
     super.dispose();
   }
+
+  // ── Nearby alert helpers ──────────────────────────────────────────────────
+
+  AlertModel? _resolveNearestDanger(
+    List<AlertModel> alerts,
+    AlertLocation? loc,
+  ) {
+    if (alerts.isEmpty) return null;
+
+    if (loc != null) {
+      final maxMeters = _nearbyRadiusKm * 1000;
+      final nearby = alerts.where((a) {
+        return a.geoLocation.distanceTo(loc) <= maxMeters;
+      }).toList();
+      if (nearby.isEmpty) return null;
+      nearby.sort((a, b) {
+        final lvl = b.alertLevel.weight.compareTo(a.alertLevel.weight);
+        if (lvl != 0) return lvl;
+        return b.createdAt.compareTo(a.createdAt);
+      });
+      return nearby.first;
+    }
+
+    // No location — fall back to most critical red alert
+    final reds = alerts.where((a) => a.alertLevel == AlertLevel.red).toList();
+    if (reds.isEmpty) return null;
+    reds.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return reds.first;
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // State is watched here, but currently just uses placeholder static content.
-    // You can wire this up to make your UI dynamic later.
-    context.watch<AlertProvider>();
+    final alerts = context.watch<AlertProvider>().alerts;
+    final userLocation = context.select<AlertProvider, AlertLocation?>(
+      (p) => p.userLocation,
+    );
+    final activeLocation = _deviceLocation ?? userLocation;
+    final nearestDanger = _resolveNearestDanger(alerts, activeLocation);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // SafeArea ensures UI doesn't overlap with the notch or status bar
       body: SafeArea(
-        // Wrapping the column in a scroll view fixes your bottom overflow bug.
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Show alert banner if there's an active alert
               if (_activeAlert != null)
                 AlertBanner(
                   alert: _activeAlert!,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.map);
-                  },
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.map),
                   onDismiss: _dismissAlert,
                 ),
               _buildHeader(colorScheme),
               const SizedBox(height: 16),
-              _buildStatusCard(),
+              nearestDanger != null
+                  ? _buildDangerStatusCard(nearestDanger)
+                  : _buildSafeStatusCard(),
               const SizedBox(height: 24),
               _buildHelpText(colorScheme),
               const SizedBox(height: 16),
@@ -111,8 +185,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildHeader(ColorScheme colorScheme) {
     final auth = context.watch<AuthProvider>();
-    final user = auth.userModel;
-    final userName = user?.displayName ?? 'User';
+    final userName = auth.userModel?.displayName ?? 'User';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -164,7 +237,9 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildStatusCard() {
+  // ── Safe status card (blue gradient) ──────────────────────────────────────
+
+  Widget _buildSafeStatusCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Container(
@@ -183,20 +258,22 @@ class _HomeScreenState extends State<HomeScreen>
           crossAxisAlignment: CrossAxisAlignment.end,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Last Update: Checked 2 mins ago',
-                    style: TextStyle(
+                    _isResolvingLocation
+                        ? 'Checking nearby alerts…'
+                        : 'All clear around you',
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 10,
                       fontFamily: 'Poppins',
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'You\nare safe',
                     style: TextStyle(
                       color: Colors.white,
@@ -206,8 +283,8 @@ class _HomeScreenState extends State<HomeScreen>
                       height: 1.1,
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'No emergencies reported nearby',
                     style: TextStyle(
                       color: Colors.white,
@@ -231,6 +308,136 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // ── Danger status card (red gradient) ─────────────────────────────────────
+
+  Widget _buildDangerStatusCard(AlertModel alert) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(
+            context,
+            AppRoutes.alertDetail,
+            arguments: alert,
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          clipBehavior: Clip.antiAlias,
+          padding: const EdgeInsets.all(24.0),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFF2E2E), Color(0xFFB22E2E)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFE53030).withAlpha(51),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _iconForAlert(alert),
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '${alert.title} • ${_timeAgo(alert.createdAt)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontFamily: 'Poppins',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Danger\nnearby!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      alert.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w400,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        'View Details',
+                        style: TextStyle(
+                          color: colorScheme.error,
+                          fontSize: 13,
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(38),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHelpText(ColorScheme colorScheme) {
     return Column(
       children: [
@@ -242,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen>
               fontSize: 14,
               fontFamily: 'Poppins',
             ),
-            children: [
+            children: const [
               TextSpan(
                 text: 'SOS button',
                 style: TextStyle(
@@ -335,4 +542,26 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
   }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+IconData _iconForAlert(AlertModel alert) {
+  final t = alert.title.toLowerCase();
+  if (t.contains('accident')) return Icons.car_crash_rounded;
+  if (t.contains('fire')) return Icons.local_fire_department_rounded;
+  if (t.contains('medical')) return Icons.medical_services_rounded;
+  if (t.contains('flood')) return Icons.water_damage_rounded;
+  if (t.contains('quake')) return Icons.terrain_rounded;
+  if (t.contains('robbery')) return Icons.lock_open_rounded;
+  if (t.contains('assault')) return Icons.report_problem_rounded;
+  return Icons.crisis_alert_rounded;
+}
+
+String _timeAgo(DateTime createdAt) {
+  final diff = DateTime.now().difference(createdAt);
+  if (diff.inMinutes < 1) return 'Just now';
+  if (diff.inHours < 1) return '${diff.inMinutes} min ago';
+  if (diff.inDays < 1) return '${diff.inHours} hr ago';
+  return '${diff.inDays} day ago';
 }
