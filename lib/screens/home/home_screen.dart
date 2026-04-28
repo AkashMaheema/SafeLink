@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../app/router.dart';
 import '../../models/alert_model.dart';
 import '../../providers/alert_provider.dart';
@@ -86,6 +87,11 @@ class _HomeScreenState extends State<HomeScreen>
         );
         _isResolvingLocation = false;
       });
+
+      // Persist location for background FCM distance checks
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('_last_device_lat', position.latitude);
+      await prefs.setDouble('_last_device_lng', position.longitude);
     } catch (_) {
       if (mounted) setState(() => _isResolvingLocation = false);
     }

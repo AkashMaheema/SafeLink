@@ -15,6 +15,7 @@ import 'services/auth_service.dart';
 import 'services/alert_service.dart';
 import 'services/firestore_service.dart';
 import 'services/messaging_service.dart';
+import 'services/notification_service.dart';
 
 Future<void> _initializeFirebaseSafely() async {
   if (Firebase.apps.isNotEmpty) {
@@ -49,6 +50,19 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Failed to set Firestore settings: $e');
   }
+
+  // ── Local notification service (full-screen intents) ─────────────────────
+  final notificationService = NotificationService();
+  await notificationService.init();
+
+  // Wire the global navigator key so notification taps can push routes
+  NotificationService.navigatorKey = navigatorKey;
+  NotificationService.onAlertTapped = (alert) {
+    navigatorKey.currentState?.pushNamed('/emergency-alert', arguments: alert);
+  };
+
+  // Check if the app was launched from a notification tap (terminated state)
+  final launchAlert = await notificationService.getAlertFromLaunch();
 
   // ── FCM setup ────────────────────────────────────────────────────────────
   final messagingService = MessagingService();
@@ -102,4 +116,15 @@ Future<void> main() async {
       child: const SafeLinkApp(),
     ),
   );
+
+  // If app was launched from a notification, navigate after the first frame
+  if (launchAlert != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      navigatorKey.currentState?.pushNamed(
+        '/emergency-alert',
+        arguments: launchAlert,
+      );
+    });
+  }
 }
+
