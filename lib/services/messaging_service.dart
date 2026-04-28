@@ -1,14 +1,38 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/alert_model.dart';
+import '../utils/constants.dart';
+import 'notification_service.dart';
 
 typedef AlertCallback = void Function(AlertModel alert);
 
-/// Background message handler — must be a top-level function
+/// Background message handler — must be a top-level function.
+/// Fires a full-screen intent notification so the user sees the alert
+/// even when the app is killed or in the background.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('Background message: ${message.messageId}');
+
+  final data = message.data;
+  if (data['type'] != 'emergency_alert') return;
+
+  try {
+    final alertJson = data['alert'];
+    if (alertJson == null) return;
+
+    final Map<String, dynamic> alertMap = jsonDecode(alertJson);
+    final alert = AlertModel.fromMap(alertMap, alertMap['id'] ?? '');
+
+    // Always show full-screen notification in background
+    // (we can't reliably check GPS in a background isolate)
+    final notificationService = NotificationService();
+    await notificationService.init();
+    await notificationService.showEmergencyNotification(alert);
+  } catch (e) {
+    debugPrint('Error in background handler: $e');
+  }
 }
 
 class MessagingService {
@@ -55,7 +79,9 @@ class MessagingService {
     _alertCallbacks.remove(callback);
   }
 
-  /// Parse and handle incoming alert messages
+  /// Parse and handle incoming alert messages.
+  /// In the foreground, we check distance against the user's SOS radius
+  /// and only show the full-screen alert if the alert is nearby.
   void _handleAlertMessage(RemoteMessage message) {
     try {
       final data = message.data;
@@ -67,16 +93,61 @@ class MessagingService {
           final Map<String, dynamic> alertMap = jsonDecode(alertJson);
           final alert = AlertModel.fromMap(alertMap, alertMap['id'] ?? '');
 
-          // Notify all registered callbacks
+          // Notify all registered callbacks (for in-app UI updates)
           for (final callback in _alertCallbacks) {
             callback(alert);
           }
+
+          // Check distance and show full-screen notification if nearby
+          _checkAndShowEmergency(alert);
 
           debugPrint('Alert notification received: ${alert.title}');
         }
       }
     } catch (e) {
       debugPrint('Error handling alert message: $e');
+    }
+  }
+
+  /// Checks the alert distance against saved SOS radius.
+  /// If nearby (or if we can't determine location), show the emergency.
+  Future<void> _checkAndShowEmergency(AlertModel alert) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final sosRadiusKm =
+          prefs.getDouble(AppConstants.sosAlertRadiusKm) ?? 30.0;
+
+      // Try to get the last known device location from the alert provider.
+      // The home screen and SOS tab both resolve the device position,
+      // so we read it from prefs if available.
+      final lastLat = prefs.getDouble('_last_device_lat');
+      final lastLng = prefs.getDouble('_last_device_lng');
+
+      if (lastLat != null && lastLng != null) {
+        final userLoc = AlertLocation(latitude: lastLat, longitude: lastLng);
+        final distanceMeters = alert.geoLocation.distanceTo(userLoc);
+        final distanceKm = distanceMeters / 1000;
+
+        if (distanceKm > sosRadiusKm) {
+          debugPrint(
+            'Alert "${alert.title}" is ${distanceKm.toStringAsFixed(1)} km '
+            'away (radius: ${sosRadiusKm.toStringAsFixed(0)} km) — skipping.',
+          );
+          return;
+        }
+      }
+
+      // Nearby or unknown location → show the full-screen emergency
+      final notificationService = NotificationService();
+      await notificationService.showEmergencyNotification(alert);
+
+      // Also navigate to the emergency screen if the app is in the foreground
+      final nav = NotificationService.navigatorKey?.currentState;
+      if (nav != null) {
+        nav.pushNamed('/emergency-alert', arguments: alert);
+      }
+    } catch (e) {
+      debugPrint('Error checking emergency proximity: $e');
     }
   }
 

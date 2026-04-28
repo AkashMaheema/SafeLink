@@ -4,6 +4,7 @@ import '../../app/router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import 'accessibility_screen.dart';
+import 'setup_sos_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -123,20 +124,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             const SizedBox(height: 12),
                             Row(
-                              children: const [
-                                Expanded(
+                              children: [
+                                const Expanded(
                                   child: _ActionPill(
                                     icon: Icons.shield_outlined,
                                     label: 'Verify Identity',
                                     isDanger: true,
                                   ),
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Expanded(
                                   child: _ActionPill(
                                     icon: Icons.notifications_active_outlined,
                                     label: 'Setup SOS',
                                     isDanger: true,
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const SetupSosScreen(),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 ),
                               ],
@@ -282,11 +291,13 @@ class _ActionPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isDanger;
+  final VoidCallback? onTap;
 
   const _ActionPill({
     required this.icon,
     required this.label,
     this.isDanger = false,
+    this.onTap,
   });
 
   @override
@@ -299,31 +310,34 @@ class _ActionPill extends StatelessWidget {
         ? colorScheme.onErrorContainer
         : colorScheme.onSurface;
 
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 14, color: fgColor),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: fgColor,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 14, color: fgColor),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: fgColor,
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

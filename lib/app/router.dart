@@ -9,6 +9,7 @@ import '../screens/sos/alert_detail_screen.dart';
 import '../screens/sos/sos_screen.dart';
 import '../screens/map/map_screen.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/alerts/emergency_alert_screen.dart';
 
 /// Named route constants — single source of truth for all routes.
 class AppRoutes {
@@ -24,6 +25,7 @@ class AppRoutes {
   static const String notifications = '/notifications';
   static const String alertDetail = '/alert-detail';
   static const String adminDashboard = '/admin';
+  static const String emergencyAlert = '/emergency-alert';
 }
 
 /// Centralised route generator passed to [MaterialApp.onGenerateRoute].
@@ -51,6 +53,9 @@ class AppRouter {
         return _slide(AlertDetailScreen(alert: alert));
       case AppRoutes.adminDashboard:
         return _slide(const AdminDashboardScreen());
+      case AppRoutes.emergencyAlert:
+        final alert = settings.arguments as AlertModel;
+        return _fade(EmergencyAlertScreen(alert: alert));
       default:
         return _fade(const LoginScreen());
     }
