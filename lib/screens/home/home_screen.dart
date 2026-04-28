@@ -19,6 +19,7 @@ class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulseScale;
+  late final MessagingService _messagingService;
   AlertModel? _activeAlert;
 
   @override
@@ -33,12 +34,12 @@ class _HomeScreenState extends State<HomeScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Listen for incoming emergency alerts
-    final messagingService = context.read<MessagingService>();
-    messagingService.onAlertReceived(_onAlertReceived);
+    // Listen for incoming emergency alerts.
+    _messagingService = context.read<MessagingService>();
+    _messagingService.onAlertReceived(_onAlertReceived);
 
     // Subscribe to emergency alerts topic
-    messagingService.subscribeToEmergencyAlerts();
+    _messagingService.subscribeToEmergencyAlerts();
   }
 
   void _onAlertReceived(AlertModel alert) {
@@ -60,10 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void dispose() {
     _pulseController.dispose();
-    if (mounted) {
-      final messagingService = context.read<MessagingService>();
-      messagingService.unsubscribeFromEmergencyAlerts();
-    }
+    _messagingService.unsubscribeFromEmergencyAlerts();
     super.dispose();
   }
 

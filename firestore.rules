@@ -42,6 +42,15 @@ service cloud.firestore {
         allow delete: if isSignedIn()
           && resource.data.uid == request.auth.uid;
       }
+
+      // Proofs subcollection: any signed-in user can create proof documents
+      // (Base64 images stored here instead of Firebase Storage).
+      // Privileged users can delete proofs during moderation.
+      match /proofs/{proofId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow delete: if isPrivilegedUser();
+      }
     }
 
     // Default deny everything else

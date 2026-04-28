@@ -18,6 +18,22 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
+  bool _didConsumeArgs = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Consume the deep-link tab argument only once — didChangeDependencies
+    // fires on every dependency change (theme, providers, etc.) and would
+    // otherwise keep resetting the user's tab selection.
+    if (!_didConsumeArgs) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args is int) {
+        _currentIndex = args;
+      }
+      _didConsumeArgs = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
