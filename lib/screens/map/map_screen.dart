@@ -288,9 +288,16 @@ class _MapScreenState extends State<MapScreen> {
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final alert = cardAlerts[index];
-                          return _NearbyAlertCard(
-                            alert: alert,
-                            distanceMeters: _distanceToAlert(alert),
+                          return GestureDetector(
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.alertDetail,
+                              arguments: alert,
+                            ),
+                            child: _NearbyAlertCard(
+                              alert: alert,
+                              distanceMeters: _distanceToAlert(alert),
+                            ),
                           );
                         },
                       ),
